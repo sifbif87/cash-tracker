@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#050506">
-<meta name="moite-pari-app" content="1.2">
+<meta name="moite-pari-app" content="1.3">
 <title>Моите пари</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
 <style>
@@ -158,6 +158,13 @@ li:last-child { padding-bottom: 0; }
 .note { color: var(--muted); font-size: 13px; margin: 0; line-height: 1.4; }
 .status { text-align: center; color: var(--muted); font-size: 13px; margin: 0; }
 
+.chip svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; margin-left: 6px; vertical-align: -1px; }
+.modal { position: fixed; inset: 0; z-index: 20; background: rgba(0,0,0,.62); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.modal-card { width: 100%; max-width: 440px; background: var(--card); border: 1px solid var(--line); border-radius: 28px; padding: 24px; display: flex; flex-direction: column; gap: 14px; }
+.hint { color: var(--muted); font-size: 13px; margin: 0; font-variant-numeric: tabular-nums; }
+.fieldrow { display: flex; flex-direction: column; gap: 8px; }
+.fieldrow .top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.sumline { font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .nav {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
   background: var(--nav-a); border-top: 1px solid var(--line);
@@ -186,6 +193,7 @@ li:last-child { padding-bottom: 0; }
       <div class="value" id="balance"></div>
       <div class="sub" id="balSub" hidden></div>
       <div class="tot" id="balTotal"></div>
+      <button class="link" id="lockNow" type="button" data-i18n="lock" hidden style="margin-top:8px"></button>
     </section>
 
     <section class="card">
@@ -217,6 +225,7 @@ li:last-child { padding-bottom: 0; }
     <section class="card total">
       <div class="label" data-i18n="totalAll"></div>
       <div class="value" id="totalVal"></div>
+      <button class="sbtn" id="revealBtn" type="button" data-i18n="showTotal" hidden style="margin-top:14px"></button>
       <ul class="brk" id="breakdown"></ul>
     </section>
 
@@ -252,16 +261,26 @@ li:last-child { padding-bottom: 0; }
           <label class="lbl" for="tName" data-i18n="tripName" style="margin:0"></label>
           <input id="tName" type="text" maxlength="40" autocomplete="off" data-i18n-ph="tripNamePh">
         </div>
-        <div class="row2" style="grid-template-columns:1.2fr 1fr">
-          <div class="setrow" style="gap:8px">
-            <label class="lbl" for="tBudget" data-i18n="tripBudget" style="margin:0"></label>
-            <input id="tBudget" type="text" inputmode="decimal" autocomplete="off" data-i18n-ph="tripBudgetPh">
-          </div>
-          <div class="setrow" style="gap:8px">
-            <label class="lbl" for="tCur" data-i18n="tripCur" style="margin:0"></label>
-            <select id="tCur"></select>
-          </div>
+        <div class="setrow" style="gap:8px">
+          <label class="lbl" for="tCur" data-i18n="tripCur" style="margin:0"></label>
+          <select id="tCur"></select>
         </div>
+        <div class="fieldrow">
+          <div class="top">
+            <label class="lbl" for="tMain" data-i18n="tripFromMain" style="margin:0"></label>
+            <span class="hint" id="tHintMain"></span>
+          </div>
+          <input id="tMain" type="text" inputmode="decimal" autocomplete="off" placeholder="0">
+        </div>
+        <div class="fieldrow">
+          <div class="top">
+            <label class="lbl" for="tVault" data-i18n="tripFromVault" style="margin:0"></label>
+            <span class="hint" id="tHintVault"></span>
+          </div>
+          <input id="tVault" type="text" inputmode="decimal" autocomplete="off" placeholder="0">
+          <button class="sbtn" id="tUnlock" type="button" data-i18n="unlockVault" hidden></button>
+        </div>
+        <div class="sumline" id="tSumLine" hidden></div>
         <p class="msg" id="tMsg" hidden></p>
         <div class="formactions">
           <button class="sbtn" id="tCancel" type="button" data-i18n="cancel"></button>
@@ -374,6 +393,15 @@ li:last-child { padding-bottom: 0; }
 
     <section class="card">
       <div class="setrow">
+        <h3 data-i18n="vaultPw"></h3>
+        <p class="note" data-i18n="vaultPwNote"></p>
+        <p class="note" id="pwStatus" style="font-weight:500;color:var(--fg);font-size:15px"></p>
+        <div class="col" id="pwBtns"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="setrow">
         <h3 data-i18n="version"></h3>
         <p class="note" id="verText"></p>
         <p class="note" data-i18n="updNote"></p>
@@ -381,6 +409,19 @@ li:last-child { padding-bottom: 0; }
     </section>
   </div>
 </main>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true" hidden>
+  <div class="modal-card">
+    <h2 id="mTitle"></h2>
+    <p class="note" id="mText" hidden></p>
+    <div class="col" id="mFields"></div>
+    <p class="msg" id="mMsg" hidden></p>
+    <div class="formactions">
+      <button class="sbtn" id="mCancel" type="button"></button>
+      <button class="sbtn primary" id="mOk" type="button"></button>
+    </div>
+  </div>
+</div>
 
 <nav class="nav" aria-label="Menu">
   <div class="nav-in">
@@ -410,7 +451,7 @@ li:last-child { padding-bottom: 0; }
 <script>
 (function () {
   var $ = function (id) { return document.getElementById(id); };
-  var VERSION = "1.2";
+  var VERSION = "1.3";
   var K_E = "moite-pari-v1", K_G = "moite-pari-goals-v1", K_S = "moite-pari-settings-v1";
   var K_T = "moite-pari-trips-v1", K_R = "moite-pari-rates-v1", K_P = "moite-pari-photo-v1";
 
