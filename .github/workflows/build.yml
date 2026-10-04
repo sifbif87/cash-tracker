@@ -23,18 +23,32 @@ jobs:
           distribution: temurin
           java-version: 21
 
+      - name: Use saved signing key
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            mkdir -p ~/.android
+            echo "$KEYSTORE_B64" | base64 -d > ~/.android/debug.keystore
+            echo "Using saved signing key"
+          else
+            echo "No saved signing key, a new one is used"
+          fi
+
       - name: Create Android project
         run: |
           mkdir app
           cd app
           npm init -y
-          npm install @capacitor/core@7 @capacitor/cli@7 @capacitor/android@7
+          npm install "@capacitor/core@>=8.3.2 <9" "@capacitor/cli@>=8.3.2 <9" "@capacitor/android@>=8.3.2 <9"
           mkdir www
           cp ../loader.html www/index.html
           cp ../app.html www/app.html
           sed -i "s|__REPO__|${{ github.repository }}|g; s|__BRANCH__|${{ github.event.repository.default_branch }}|g" www/index.html
           grep -n "raw.githubusercontent.com" www/index.html
           npx cap init "Моите пари" com.moitepari.app --web-dir www
+          node -e "const fs=require('fs');const c=JSON.parse(fs.readFileSync('capacitor.config.json','utf8'));c.plugins=Object.assign({},c.plugins,{SystemBars:{style:'DARK'}});fs.writeFileSync('capacitor.config.json',JSON.stringify(c,null,2));"
+          cat capacitor.config.json
           npx cap add android
           npx cap sync android
 
