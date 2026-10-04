@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="bg">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050506">
+<title>Моите пари</title>
+<style>
+  /* Capacitor 8 подава размерите на системните ленти като --safe-area-inset-*. */
+  :root {
+    --top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+    --bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+  }
+  html, body { margin: 0; height: 100%; background: #050506; }
+  body { display: flex; flex-direction: column; }
+  .bar-top { flex: none; height: var(--top); background: #050506; }
+  .bar-bottom { flex: none; height: var(--bottom); background: #0d0d0f; }
+  iframe { display: block; flex: 1 1 auto; min-height: 0; border: 0; width: 100%; background: #050506; }
+</style>
+</head>
+<body>
+<div class="bar-top"></div>
+<iframe id="app" title="Моите пари"></iframe>
+<div class="bar-bottom"></div>
+<script>
+/* Тази обвивка е вградена в APK и почти никога не се променя.
+   Цялата логика е в core.js, който се обновява сам от GitHub.
+   __REPO__ и __BRANCH__ се попълват от GitHub при build. */
+(function () {
+  var RAW = "https://raw.githubusercontent.com/__REPO__/__BRANCH__/";
+  var KEY = "moite-pari-core";
+  var timer = null;
+
+  function valid(c) { return typeof c === "string" && c.length > 300 && c.indexOf("moite-pari-core") !== -1; }
+  function loadBundled() {
+    fetch("core.js").then(function (r) { return r.text(); }).then(function (c) { if (valid(c)) run(c, false); });
+  }
+  function fail() {
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    loadBundled();
+  }
+  function run(code, fromCache) {
+    try { window.__moiteCoreOk = false; (new Function("RAW", code))(RAW); }
+    catch (e) { if (fromCache) fail(); return; }
+    if (fromCache) {
+      clearTimeout(timer);
+      timer = setTimeout(function () { if (!window.__moiteCoreOk) fail(); }, 5000);
+    }
+  }
+
+  var cached = null;
+  try { cached = localStorage.getItem(KEY); } catch (e) {}
+  if (valid(cached)) run(cached, true); else loadBundled();
+
+  /* Новото ядро се сваля сега и се ползва от следващото отваряне. */
+  fetch(RAW + "core.js?t=" + Date.now(), { cache: "no-store" })
+    .then(function (r) { return r.ok ? r.text() : Promise.reject(); })
+    .then(function (c) { if (valid(c)) { try { localStorage.setItem(KEY, c); } catch (e) {} } })
+    .catch(function () {});
+})();
+</script>
+</body>
+</html>
