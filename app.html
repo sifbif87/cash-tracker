@@ -1,0 +1,738 @@
+<!doctype html>
+<html lang="bg">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050506">
+<meta name="moite-pari-app" content="1.1">
+<title>Моите пари</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
+<style>
+:root {
+  --bg: #050506;
+  --card: #2a2a2c;
+  --card-line: #3a3a3d;
+  --field: #2f2f32;
+  --fg: #f4f4f5;
+  --muted: #a3a3a8;
+  --accent: #2f6bd0;
+  --accent-fg: #ffffff;
+  --accent-text: #8db4ff;
+  --in: #6fd69a;
+  --out: #ff9b8f;
+  --track: #1b1b1d;
+  --nav: #0d0d0f;
+  --font: "Roboto", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { min-height: 100%; margin: 0; background: var(--bg); }
+body {
+  color: var(--fg);
+  font-family: var(--font);
+  font-size: 16px;
+  padding-inline: 16px;
+  padding-top: calc(16px + env(safe-area-inset-top, 0px));
+  padding-bottom: calc(104px + env(safe-area-inset-bottom, 0px));
+}
+[hidden] { display: none !important; }
+.app { max-width: 480px; margin-inline: auto; }
+.page { display: flex; flex-direction: column; gap: 16px; }
+.card { background: var(--card); border: 1px solid var(--card-line); border-radius: 28px; padding: 24px; }
+h2 { margin: 0; font-size: 22px; font-weight: 700; }
+h3 { margin: 0; font-size: 18px; font-weight: 700; overflow-wrap: anywhere; }
+
+.balance { text-align: center; padding-block: 28px; }
+.balance .label { color: var(--muted); font-size: 15px; }
+.balance .value { font-size: 44px; font-weight: 700; margin-top: 6px; font-variant-numeric: tabular-nums; letter-spacing: -0.5px; overflow-wrap: anywhere; }
+.balance .value.neg { color: var(--out); }
+
+label.lbl { display: block; font-size: 15px; font-weight: 500; margin-bottom: 10px; }
+.field { display: flex; flex-direction: column; gap: 12px; }
+input, select {
+  width: 100%; min-width: 0; background: var(--field); color: var(--fg);
+  border: 1px solid var(--card-line); border-radius: 22px; font: inherit;
+  padding: 0 20px; outline: none; height: 52px;
+}
+select { padding-inline: 16px; }
+input::placeholder { color: #8a8d99; }
+input:focus-visible, select:focus-visible { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(47,107,208,.35); }
+input.bad { border-color: var(--out); }
+#amount { height: 80px; text-align: center; font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+button { font: inherit; cursor: pointer; border: 1px solid var(--card-line); color: var(--fg); background: transparent; }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+.btn { height: 80px; border-radius: 24px; font-size: 24px; font-weight: 700; min-width: 0; }
+.btn.add { background: var(--card); }
+.btn.spend, .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+.btn:active, .sbtn:active { transform: scale(.98); }
+.sbtn { height: 52px; border-radius: 20px; font-size: 17px; font-weight: 700; padding-inline: 18px; min-width: 0; }
+.sbtn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+.sbtn.full { width: 100%; }
+.link { border: 0; color: var(--muted); font-size: 15px; padding: 8px 4px; }
+.link.accent { color: var(--accent-text); font-weight: 500; }
+.link.danger { color: var(--out); }
+.msg { color: var(--out); font-size: 14px; margin: 0; min-height: 0; }
+
+.head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.head.mb { margin-bottom: 18px; }
+.confirm { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; color: var(--muted); font-size: 15px; }
+.confirm button { border-radius: 12px; padding: 8px 14px; font-size: 15px; }
+.confirm .yes { background: var(--out); color: #2b0b07; border-color: var(--out); font-weight: 700; }
+.empty { color: var(--muted); font-size: 16px; margin: 0; line-height: 1.45; }
+
+ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+li { display: flex; align-items: center; gap: 12px; padding-block: 12px; border-top: 1px solid var(--card-line); }
+li:first-child { border-top: 0; padding-top: 0; }
+li:last-child { padding-bottom: 0; }
+.meta { flex: 1; min-width: 0; }
+.meta .t { font-weight: 500; overflow-wrap: anywhere; }
+.meta .d { color: var(--muted); font-size: 13px; margin-top: 2px; }
+.amt { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.amt.in { color: var(--in); }
+.amt.out { color: var(--out); }
+.amt.goal { color: var(--accent-text); }
+.del { border: 0; color: var(--muted); font-size: 22px; line-height: 1; width: 36px; height: 36px; border-radius: 10px; }
+.day + .day { margin-top: 22px; }
+.day h3 { font-size: 14px; font-weight: 500; color: var(--muted); text-transform: capitalize; margin-bottom: 12px; }
+
+.goalform { display: flex; flex-direction: column; gap: 14px; }
+.row2 { display: grid; grid-template-columns: 1fr 1.3fr; gap: 12px; }
+.formactions { display: flex; gap: 10px; }
+.formactions .sbtn { flex: 1; }
+
+.goal { display: flex; flex-direction: column; gap: 14px; }
+.g-sub { color: var(--muted); font-size: 14px; white-space: nowrap; }
+.g-amounts { font-variant-numeric: tabular-nums; }
+.g-amounts strong { font-size: 28px; font-weight: 700; }
+.g-amounts span { color: var(--muted); font-size: 15px; }
+.bar { height: 10px; background: var(--track); border-radius: 999px; overflow: hidden; }
+.bar > div { height: 100%; background: var(--accent); border-radius: 999px; min-width: 0; }
+.bar.done > div { background: var(--in); }
+.g-perday { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 15px; }
+.g-perday b { color: var(--fg); font-variant-numeric: tabular-nums; }
+.g-done { text-align: center; color: var(--in); font-weight: 700; padding-block: 10px; }
+.other { display: flex; flex-direction: column; gap: 10px; }
+.other .formactions { gap: 8px; }
+.g-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.seg button { height: 52px; border-radius: 20px; font-size: 17px; font-weight: 500; }
+.seg button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); font-weight: 700; }
+.setrow { display: flex; flex-direction: column; gap: 10px; }
+.setrow + .setrow { margin-top: 22px; }
+.note { color: var(--muted); font-size: 13px; margin: 0; line-height: 1.4; }
+.status { text-align: center; color: var(--muted); font-size: 13px; margin: 0; }
+
+.nav {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
+  background: var(--nav); border-top: 1px solid var(--card-line);
+  padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px));
+}
+.nav-in { max-width: 480px; margin-inline: auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.nav button { border: 0; background: transparent; color: var(--muted); display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; font-weight: 500; padding: 8px 0 6px; border-radius: 16px; min-width: 0; }
+.nav button svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.nav button[aria-current="page"] { color: var(--fg); background: var(--card); }
+.nav button span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { .btn:active, .sbtn:active { transform: none; } }
+</style>
+</head>
+<body>
+<main class="app">
+
+  <!-- Начало -->
+  <div class="page" id="page-home">
+    <section class="card balance" aria-live="polite">
+      <div class="label" data-i18n="balance"></div>
+      <div class="value" id="balance"></div>
+    </section>
+
+    <section class="card">
+      <label class="lbl" for="amount" data-i18n="amount"></label>
+      <div class="field">
+        <input id="amount" type="text" inputmode="decimal" autocomplete="off" data-i18n-ph="amountPh">
+        <input id="note" type="text" autocomplete="off" maxlength="60" data-i18n-ph="notePh">
+      </div>
+      <p class="msg" id="homeMsg" style="margin-top:12px" hidden></p>
+      <div class="actions">
+        <button class="btn add" id="addBtn" type="button" data-i18n="income"></button>
+        <button class="btn spend" id="spendBtn" type="button" data-i18n="expense"></button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="head mb">
+        <h2 data-i18n="recent"></h2>
+        <button class="link accent" id="viewAll" type="button" data-i18n="viewAll" hidden></button>
+      </div>
+      <p class="empty" id="homeEmpty" data-i18n="none"></p>
+      <ul id="homeList"></ul>
+    </section>
+    <p class="status" data-i18n="storageNote"></p>
+  </div>
+
+  <!-- Цели -->
+  <div class="page" id="page-goals" hidden>
+    <div class="head" style="padding-inline:4px">
+      <h2 data-i18n="goals"></h2>
+      <button class="link accent" id="newGoalBtn" type="button" data-i18n="newGoal"></button>
+    </div>
+
+    <section class="card" id="goalForm" hidden>
+      <div class="goalform">
+        <div class="setrow" style="gap:8px">
+          <label class="lbl" for="gName" data-i18n="goalName" style="margin:0"></label>
+          <input id="gName" type="text" maxlength="40" autocomplete="off" data-i18n-ph="goalNamePh">
+        </div>
+        <div class="setrow" style="gap:8px">
+          <label class="lbl" for="gTarget" data-i18n="goalTarget" style="margin:0"></label>
+          <input id="gTarget" type="text" inputmode="decimal" autocomplete="off" data-i18n-ph="goalTargetPh">
+        </div>
+        <div class="setrow" style="gap:8px">
+          <label class="lbl" for="gTime" data-i18n="goalTime" style="margin:0"></label>
+          <div class="row2">
+            <input id="gTime" type="text" inputmode="numeric" autocomplete="off" placeholder="3">
+            <select id="gUnit" aria-label="unit">
+              <option value="days" data-i18n="unitDays"></option>
+              <option value="weeks" data-i18n="unitWeeks"></option>
+              <option value="months" data-i18n="unitMonths" selected></option>
+            </select>
+          </div>
+        </div>
+        <p class="msg" id="formMsg" hidden></p>
+        <div class="formactions">
+          <button class="sbtn" id="gCancel" type="button" data-i18n="cancel"></button>
+          <button class="sbtn primary" id="gCreate" type="button" data-i18n="create"></button>
+        </div>
+      </div>
+    </section>
+
+    <p class="empty card" id="goalsEmpty" data-i18n="noGoals"></p>
+    <div class="page" id="goalList"></div>
+  </div>
+
+  <!-- История -->
+  <div class="page" id="page-history" hidden>
+    <section class="card">
+      <div class="head mb">
+        <h2 data-i18n="history"></h2>
+        <button class="link" id="clearBtn" type="button" data-i18n="clear" hidden></button>
+        <div class="confirm" id="confirmBox" hidden>
+          <span data-i18n="clearQ"></span>
+          <button class="yes" id="yesBtn" type="button" data-i18n="del"></button>
+          <button id="noBtn" type="button" data-i18n="no"></button>
+        </div>
+      </div>
+      <p class="empty" id="histEmpty" data-i18n="none"></p>
+      <div id="histList"></div>
+    </section>
+  </div>
+
+  <!-- Настройки -->
+  <div class="page" id="page-settings" hidden>
+    <section class="card">
+      <div class="setrow">
+        <h3 data-i18n="language"></h3>
+        <div class="seg" role="group">
+          <button type="button" id="langBg" data-lang="bg">Български</button>
+          <button type="button" id="langEn" data-lang="en">English</button>
+        </div>
+      </div>
+      <div class="setrow">
+        <label for="curSel"><h3 data-i18n="currency"></h3></label>
+        <select id="curSel"></select>
+        <p class="note" data-i18n="currencyNote"></p>
+      </div>
+    </section>
+    <section class="card">
+      <div class="setrow">
+        <h3 data-i18n="version"></h3>
+        <p class="note" id="verText"></p>
+        <p class="note" data-i18n="updNote"></p>
+      </div>
+    </section>
+  </div>
+</main>
+
+<nav class="nav" aria-label="Menu">
+  <div class="nav-in">
+    <button type="button" data-go="home">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5h13V10"/></svg>
+      <span data-i18n="navHome"></span>
+    </button>
+    <button type="button" data-go="goals">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="0.8"/></svg>
+      <span data-i18n="navGoals"></span>
+    </button>
+    <button type="button" data-go="history">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>
+      <span data-i18n="navHistory"></span>
+    </button>
+    <button type="button" data-go="settings">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>
+      <span data-i18n="navSettings"></span>
+    </button>
+  </div>
+</nav>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var VERSION = "1.1";
+  var K_E = "moite-pari-v1", K_G = "moite-pari-goals-v1", K_S = "moite-pari-settings-v1";
+
+  var T = {
+    bg: {
+      navHome: "Начало", navGoals: "Цели", navHistory: "История", navSettings: "Настройки",
+      balance: "Текущ баланс", amount: "Сума", amountPh: "Напр. 50", notePh: "Бележка (по желание)",
+      income: "+ Добави", expense: "− Разход",
+      recent: "Последни движения", viewAll: "Всички", none: "Все още няма движения.",
+      storageNote: "Записите се пазят само на този телефон.",
+      history: "История", clear: "Изчисти", clearQ: "Всички записи? Прогресът по целите също се нулира.",
+      del: "Изтрий", no: "Не", today: "Днес", yesterday: "Вчера",
+      defIn: "Приход", defOut: "Разход", toGoal: "В цел: ", fromGoal: "От цел: ", delRow: "Изтрий записа",
+      goals: "Цели", newGoal: "+ Нова цел", goalName: "Име на целта", goalNamePh: "Напр. Почивка",
+      goalTarget: "Колко искаш да събереш", goalTargetPh: "Напр. 1000", goalTime: "За колко време",
+      unitDays: "дни", unitWeeks: "седмици", unitMonths: "месеца",
+      create: "Създай цел", cancel: "Отказ",
+      noGoals: "Още нямаш цели. Задай сума и срок, а приложението ще изчисли колко да отделяш на ден.",
+      saved: "Отделени", of: "от", perDay: "Днешна сума",
+      dueToday: "Срокът е днес", overdue: "Срокът изтече",
+      saveToday: "Отдели ", doneToday: "Днес е готово", reached: "Целта е постигната",
+      other: "Друга сума", put: "Отдели", take: "Върни",
+      errBal: "Нямаш достатъчно баланс.", errGoal: "В целта няма толкова.", errAmt: "Въведи сума над 0.",
+      errName: "Напиши име на целта.", errTarget: "Въведи сума над 0.", errTime: "Въведи срок с цяло число.",
+      delGoal: "Изтрий целта", delGoalQ: "Отделените пари се връщат в баланса.",
+      settings: "Настройки", language: "Език", currency: "Валута",
+      currencyNote: "Сменя само означението. Сумите не се преобразуват.",
+      version: "Версия", updNote: "Обновленията се свалят сами, когато има интернет."
+    },
+    en: {
+      navHome: "Home", navGoals: "Goals", navHistory: "History", navSettings: "Settings",
+      balance: "Current balance", amount: "Amount", amountPh: "e.g. 50", notePh: "Note (optional)",
+      income: "+ Income", expense: "− Expense",
+      recent: "Recent activity", viewAll: "View all", none: "No transactions yet.",
+      storageNote: "Your data is stored only on this phone.",
+      history: "History", clear: "Clear", clearQ: "Delete everything? Goal progress resets too.",
+      del: "Delete", no: "No", today: "Today", yesterday: "Yesterday",
+      defIn: "Income", defOut: "Expense", toGoal: "To goal: ", fromGoal: "From goal: ", delRow: "Delete entry",
+      goals: "Goals", newGoal: "+ New goal", goalName: "Goal name", goalNamePh: "e.g. Holiday",
+      goalTarget: "How much do you want to save", goalTargetPh: "e.g. 1000", goalTime: "How much time do you have",
+      unitDays: "days", unitWeeks: "weeks", unitMonths: "months",
+      create: "Create goal", cancel: "Cancel",
+      noGoals: "No goals yet. Set an amount and a deadline and the app works out how much to put aside each day.",
+      saved: "Saved", of: "of", perDay: "Today's amount",
+      dueToday: "Due today", overdue: "Past deadline",
+      saveToday: "Save ", doneToday: "Done for today", reached: "Goal reached",
+      other: "Other amount", put: "Save", take: "Take back",
+      errBal: "Not enough balance.", errGoal: "The goal doesn't hold that much.", errAmt: "Enter an amount above 0.",
+      errName: "Enter a goal name.", errTarget: "Enter an amount above 0.", errTime: "Enter the time as a whole number.",
+      delGoal: "Delete goal", delGoalQ: "Saved money goes back to your balance.",
+      settings: "Settings", language: "Language", currency: "Currency",
+      currencyNote: "Only changes the label. Amounts are not converted.",
+      version: "Version", updNote: "Updates download automatically when you are online."
+    }
+  };
+
+  var CURS = {
+    BGN: { bg: "лв.", en: "BGN", pre: false },
+    EUR: { bg: "€", en: "€", pre: true },
+    USD: { bg: "$", en: "$", pre: true },
+    GBP: { bg: "£", en: "£", pre: true },
+    UAH: { bg: "₴", en: "₴", pre: true },
+    TRY: { bg: "₺", en: "₺", pre: true },
+    RON: { bg: "lei", en: "RON", pre: false },
+    PLN: { bg: "zł", en: "PLN", pre: false },
+    CHF: { bg: "CHF", en: "CHF", pre: false }
+  };
+
+  var S = { lang: "bg", cur: "BGN" };
+  var entries = [], goals = [];
+  var page = "home", showForm = false, openGoal = null, delGoalId = null;
+  var goalMsg = {};
+
+  function load(k, d) { try { var v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch (e) { return d; } }
+  function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function t(k) { return (T[S.lang] && T[S.lang][k]) || T.bg[k] || k; }
+  function loc() { return S.lang === "en" ? "en-GB" : "bg-BG"; }
+  function round2(x) { return Math.round(x * 100) / 100; }
+  function p2(n) { return (n < 10 ? "0" : "") + n; }
+  function ymd(d) { return d.getFullYear() + "-" + p2(d.getMonth() + 1) + "-" + p2(d.getDate()); }
+  function parseYmd(s) { var a = String(s).split("-"); return new Date(+a[0], +a[1] - 1, +a[2]); }
+  function startOfDay(ts) { var d = new Date(ts); return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(); }
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+  function money(n) {
+    var sign = n < 0 ? "−" : "";
+    var num = Math.abs(n).toLocaleString(loc(), { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    var c = CURS[S.cur] || CURS.BGN;
+    var sym = S.lang === "en" ? c.en : c.bg;
+    if (S.lang === "en") return sign + (c.pre ? sym + num : sym + " " + num);
+    return sign + num + " " + sym;
+  }
+  function parseAmount(s) {
+    var n = parseFloat(String(s).replace(/\s/g, "").replace(",", "."));
+    if (!isFinite(n) || n <= 0) return null;
+    return round2(n);
+  }
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function daysText(n) {
+    if (S.lang === "en") return n === 1 ? "1 day left" : n + " days left";
+    return n === 1 ? "1 ден остава" : n + " дни остават";
+  }
+
+  /* ---------- данни ---------- */
+  function delta(e) { return (e.type === "in" || e.type === "from") ? e.amount : -e.amount; }
+  function balance() { var b = 0; entries.forEach(function (e) { b += delta(e); }); return round2(b); }
+  function sortedEntries() { return entries.slice().sort(function (a, b) { return b.ts - a.ts; }); }
+  function entryTitle(e) {
+    if (e.type === "to") return t("toGoal") + (e.goalName || "");
+    if (e.type === "from") return t("fromGoal") + (e.goalName || "");
+    return e.note || (e.type === "in" ? t("defIn") : t("defOut"));
+  }
+  function entryClass(e) { return e.type === "in" ? "in" : (e.type === "out" ? "out" : "goal"); }
+  function addEntry(o) {
+    o.id = uid(); o.ts = Date.now();
+    entries.push(o); save(K_E, entries);
+  }
+
+  function goalInfo(g) {
+    var t0 = startOfDay(Date.now()), saved = 0, savedToday = 0;
+    entries.forEach(function (e) {
+      if (e.goalId !== g.id) return;
+      var v = e.type === "to" ? e.amount : (e.type === "from" ? -e.amount : 0);
+      saved += v;
+      if (e.ts >= t0) savedToday += v;
+    });
+    saved = round2(saved); savedToday = round2(savedToday);
+    var remaining = Math.max(round2(g.target - saved), 0);
+    var daysLeft = Math.round((parseYmd(g.deadline).getTime() - t0) / 86400000);
+    var d = Math.max(daysLeft, 1);
+    var share = Math.ceil(Math.round((remaining + savedToday) * 100) / d) / 100;
+    var todayLeft = Math.min(Math.max(round2(share - savedToday), 0), remaining);
+    return {
+      saved: saved, remaining: remaining, daysLeft: daysLeft, share: share, todayLeft: todayLeft,
+      reached: remaining <= 0,
+      pct: g.target > 0 ? Math.min(100, saved / g.target * 100) : 0
+    };
+  }
+
+  /* ---------- рендер ---------- */
+  function dayLabel(ts) {
+    var d0 = startOfDay(ts), n0 = startOfDay(Date.now());
+    if (d0 === n0) return t("today");
+    if (d0 === startOfDay(n0 - 43200000)) return t("yesterday");
+    return new Date(ts).toLocaleDateString(loc(), { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  }
+  function fullDate(ts) {
+    return new Date(ts).toLocaleString(loc(), { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  }
+  function timeOnly(ts) {
+    return new Date(ts).toLocaleTimeString(loc(), { hour: "2-digit", minute: "2-digit" });
+  }
+  function rowEl(e, mode) {
+    var li = el("li");
+    var meta = el("div", "meta");
+    meta.appendChild(el("div", "t", entryTitle(e)));
+    meta.appendChild(el("div", "d", mode === "time" ? timeOnly(e.ts) : fullDate(e.ts)));
+    var a = el("div", "amt " + entryClass(e), (delta(e) >= 0 ? "+" : "−") + money(e.amount));
+    li.appendChild(meta); li.appendChild(a);
+    if (mode === "time") {
+      var x = el("button", "del", "×");
+      x.type = "button";
+      x.setAttribute("aria-label", t("delRow"));
+      x.setAttribute("data-del", e.id);
+      li.appendChild(x);
+    }
+    return li;
+  }
+
+  function renderStatic() {
+    document.documentElement.lang = S.lang;
+    var i, n;
+    n = document.querySelectorAll("[data-i18n]");
+    for (i = 0; i < n.length; i++) n[i].textContent = t(n[i].getAttribute("data-i18n"));
+    n = document.querySelectorAll("[data-i18n-ph]");
+    for (i = 0; i < n.length; i++) n[i].setAttribute("placeholder", t(n[i].getAttribute("data-i18n-ph")));
+    $("verText").textContent = t("version") + " " + VERSION;
+    $("langBg").setAttribute("aria-pressed", S.lang === "bg" ? "true" : "false");
+    $("langEn").setAttribute("aria-pressed", S.lang === "en" ? "true" : "false");
+  }
+
+  function renderHome() {
+    var bal = balance(), b = $("balance");
+    b.textContent = money(bal);
+    b.classList.toggle("neg", bal < 0);
+    var list = $("homeList"); list.textContent = "";
+    var s = sortedEntries(), top = s.slice(0, 5);
+    top.forEach(function (e) { list.appendChild(rowEl(e, "full")); });
+    $("homeEmpty").hidden = s.length > 0;
+    $("viewAll").hidden = s.length <= 5;
+  }
+
+  function renderHistory() {
+    var box = $("histList"); box.textContent = "";
+    var s = sortedEntries(), curKey = null, ul = null;
+    s.forEach(function (e) {
+      var k = startOfDay(e.ts);
+      if (k !== curKey) {
+        curKey = k;
+        var day = el("div", "day");
+        day.appendChild(el("h3", null, dayLabel(e.ts)));
+        ul = el("ul");
+        day.appendChild(ul); box.appendChild(day);
+      }
+      ul.appendChild(rowEl(e, "time"));
+    });
+    $("histEmpty").hidden = s.length > 0;
+    if (!s.length) { $("clearBtn").hidden = true; $("confirmBox").hidden = true; }
+    else if ($("confirmBox").hidden) { $("clearBtn").hidden = false; }
+  }
+
+  function renderGoals() {
+    $("goalForm").hidden = !showForm;
+    $("newGoalBtn").hidden = showForm;
+    $("goalsEmpty").hidden = goals.length > 0 || showForm;
+    var list = $("goalList"); list.textContent = "";
+    goals.forEach(function (g) {
+      var inf = goalInfo(g);
+      var card = el("section", "card goal");
+      card.setAttribute("data-gid", g.id);
+
+      var head = el("div", "head");
+      head.appendChild(el("h3", null, g.name));
+      var sub = inf.reached ? "" : (inf.daysLeft > 0 ? daysText(inf.daysLeft) : (inf.daysLeft === 0 ? t("dueToday") : t("overdue")));
+      head.appendChild(el("span", "g-sub", sub));
+      card.appendChild(head);
+
+      var am = el("div", "g-amounts");
+      am.appendChild(el("strong", null, money(inf.saved)));
+      am.appendChild(el("span", null, " " + t("of") + " " + money(g.target)));
+      card.appendChild(am);
+
+      var bar = el("div", "bar" + (inf.reached ? " done" : ""));
+      var fill = el("div"); fill.style.width = inf.pct.toFixed(1) + "%";
+      bar.appendChild(fill); card.appendChild(bar);
+
+      if (inf.reached) {
+        card.appendChild(el("div", "g-done", t("reached")));
+      } else if (inf.todayLeft > 0) {
+        var pd = el("div", "g-perday");
+        pd.appendChild(el("span", null, t("perDay")));
+        pd.appendChild(el("b", null, money(inf.share)));
+        card.appendChild(pd);
+        var sb = el("button", "sbtn primary full", t("saveToday") + money(inf.todayLeft));
+        sb.type = "button"; sb.setAttribute("data-act", "today"); sb.setAttribute("data-id", g.id);
+        card.appendChild(sb);
+      } else {
+        card.appendChild(el("div", "g-done", t("doneToday")));
+      }
+
+      var msg = el("p", "msg", goalMsg[g.id] || "");
+      msg.hidden = !goalMsg[g.id];
+      card.appendChild(msg);
+
+      if (openGoal === g.id) {
+        var other = el("div", "other");
+        var inp = el("input"); inp.type = "text"; inp.id = "oa-" + g.id;
+        inp.setAttribute("inputmode", "decimal"); inp.setAttribute("autocomplete", "off");
+        inp.setAttribute("placeholder", t("amountPh"));
+        other.appendChild(inp);
+        var fa = el("div", "formactions");
+        var tk = el("button", "sbtn", t("take")); tk.type = "button";
+        tk.setAttribute("data-act", "take"); tk.setAttribute("data-id", g.id);
+        var pt = el("button", "sbtn primary", t("put")); pt.type = "button";
+        pt.setAttribute("data-act", "put"); pt.setAttribute("data-id", g.id);
+        fa.appendChild(tk); fa.appendChild(pt);
+        other.appendChild(fa);
+        card.appendChild(other);
+      }
+
+      var foot = el("div", "g-foot");
+      var ob = el("button", "link accent", t("other")); ob.type = "button";
+      ob.setAttribute("data-act", "toggle"); ob.setAttribute("data-id", g.id);
+      foot.appendChild(ob);
+      if (delGoalId === g.id) {
+        var cf = el("div", "confirm");
+        cf.appendChild(el("span", null, t("delGoalQ")));
+        var y = el("button", "yes", t("del")); y.type = "button";
+        y.setAttribute("data-act", "delyes"); y.setAttribute("data-id", g.id);
+        var no = el("button", null, t("no")); no.type = "button";
+        no.setAttribute("data-act", "delno"); no.setAttribute("data-id", g.id);
+        cf.appendChild(y); cf.appendChild(no);
+        foot.appendChild(cf);
+      } else {
+        var db = el("button", "link danger", t("delGoal")); db.type = "button";
+        db.setAttribute("data-act", "del"); db.setAttribute("data-id", g.id);
+        foot.appendChild(db);
+      }
+      card.appendChild(foot);
+      list.appendChild(card);
+    });
+  }
+
+  function renderSettings() {
+    var sel = $("curSel");
+    if (!sel.options.length) {
+      Object.keys(CURS).forEach(function (code) {
+        var o = document.createElement("option");
+        o.value = code; sel.appendChild(o);
+      });
+    }
+    for (var i = 0; i < sel.options.length; i++) {
+      var code = sel.options[i].value, c = CURS[code];
+      sel.options[i].textContent = code + " (" + (S.lang === "en" ? c.en : c.bg) + ")";
+    }
+    sel.value = S.cur;
+  }
+
+  function renderNav() {
+    var btns = document.querySelectorAll(".nav button");
+    for (var i = 0; i < btns.length; i++) {
+      if (btns[i].getAttribute("data-go") === page) btns[i].setAttribute("aria-current", "page");
+      else btns[i].removeAttribute("aria-current");
+    }
+    ["home", "goals", "history", "settings"].forEach(function (p) { $("page-" + p).hidden = p !== page; });
+  }
+
+  function renderAll() {
+    renderStatic(); renderSettings(); renderHome(); renderGoals(); renderHistory(); renderNav();
+  }
+  function go(p) {
+    page = p;
+    if (p !== "history") { $("confirmBox").hidden = true; }
+    renderAll(); window.scrollTo(0, 0);
+  }
+
+  /* ---------- действия: начало ---------- */
+  function showHomeMsg(txt) { var m = $("homeMsg"); m.textContent = txt || ""; m.hidden = !txt; }
+  function addMove(type) {
+    var inp = $("amount"), amount = parseAmount(inp.value);
+    if (amount === null) { inp.classList.add("bad"); showHomeMsg(t("errAmt")); inp.focus(); return; }
+    inp.classList.remove("bad"); showHomeMsg("");
+    addEntry({ type: type, amount: amount, note: $("note").value.trim() });
+    inp.value = ""; $("note").value = "";
+    renderAll();
+  }
+
+  /* ---------- действия: цели ---------- */
+  function addUnits(unit, n) {
+    var d = new Date(); d.setHours(0, 0, 0, 0);
+    if (unit === "days") d.setDate(d.getDate() + n);
+    else if (unit === "weeks") d.setDate(d.getDate() + 7 * n);
+    else {
+      var day = d.getDate(); d.setDate(1); d.setMonth(d.getMonth() + n);
+      var last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+      d.setDate(Math.min(day, last));
+    }
+    return d;
+  }
+  function resetGoalForm() {
+    $("gName").value = ""; $("gTarget").value = ""; $("gTime").value = ""; $("gUnit").value = "months";
+    ["gName", "gTarget", "gTime"].forEach(function (id) { $(id).classList.remove("bad"); });
+    $("formMsg").hidden = true;
+  }
+  function createGoal() {
+    var name = $("gName").value.trim(), target = parseAmount($("gTarget").value);
+    var time = parseInt($("gTime").value, 10), unit = $("gUnit").value;
+    var bad = null, txt = "";
+    ["gName", "gTarget", "gTime"].forEach(function (id) { $(id).classList.remove("bad"); });
+    if (!name) { bad = "gName"; txt = t("errName"); }
+    else if (target === null) { bad = "gTarget"; txt = t("errTarget"); }
+    else if (!isFinite(time) || time < 1 || time > 3650) { bad = "gTime"; txt = t("errTime"); }
+    if (bad) {
+      $(bad).classList.add("bad"); $("formMsg").textContent = txt; $("formMsg").hidden = false; $(bad).focus(); return;
+    }
+    goals.push({ id: uid(), name: name, target: target, deadline: ymd(addUnits(unit, time)), created: Date.now() });
+    save(K_G, goals);
+    showForm = false; resetGoalForm(); renderAll();
+  }
+  function findGoal(id) { for (var i = 0; i < goals.length; i++) if (goals[i].id === id) return goals[i]; return null; }
+  function moveToGoal(g, amount) {
+    if (amount > balance()) { goalMsg[g.id] = t("errBal"); return false; }
+    addEntry({ type: "to", amount: amount, goalId: g.id, goalName: g.name }); goalMsg[g.id] = ""; return true;
+  }
+  function onGoalClick(ev) {
+    var b = ev.target.closest("[data-act]");
+    if (!b) return;
+    var id = b.getAttribute("data-id"), act = b.getAttribute("data-act"), g = findGoal(id);
+    if (!g) return;
+    goalMsg[id] = "";
+    if (act === "today") {
+      moveToGoal(g, goalInfo(g).todayLeft);
+    } else if (act === "toggle") {
+      openGoal = openGoal === id ? null : id;
+    } else if (act === "put" || act === "take") {
+      var inp = $("oa-" + id), amount = parseAmount(inp ? inp.value : "");
+      if (amount === null) goalMsg[id] = t("errAmt");
+      else if (act === "put") { if (moveToGoal(g, amount)) openGoal = null; }
+      else if (amount > goalInfo(g).saved) goalMsg[id] = t("errGoal");
+      else { addEntry({ type: "from", amount: amount, goalId: g.id, goalName: g.name }); openGoal = null; }
+    } else if (act === "del") {
+      delGoalId = id;
+    } else if (act === "delno") {
+      delGoalId = null;
+    } else if (act === "delyes") {
+      var sv = goalInfo(g).saved;
+      if (sv > 0) addEntry({ type: "from", amount: sv, goalId: g.id, goalName: g.name });
+      goals = goals.filter(function (x) { return x.id !== id; }); save(K_G, goals);
+      delGoalId = null; if (openGoal === id) openGoal = null;
+    }
+    renderAll();
+  }
+
+  /* ---------- събития ---------- */
+  $("addBtn").addEventListener("click", function () { addMove("in"); });
+  $("spendBtn").addEventListener("click", function () { addMove("out"); });
+  $("amount").addEventListener("input", function () { this.classList.remove("bad"); showHomeMsg(""); });
+  $("amount").addEventListener("keydown", function (e) { if (e.key === "Enter") addMove("out"); });
+  $("viewAll").addEventListener("click", function () { go("history"); });
+
+  $("newGoalBtn").addEventListener("click", function () { showForm = true; renderGoals(); $("gName").focus(); });
+  $("gCancel").addEventListener("click", function () { showForm = false; resetGoalForm(); renderGoals(); });
+  $("gCreate").addEventListener("click", createGoal);
+  $("goalList").addEventListener("click", onGoalClick);
+
+  $("histList").addEventListener("click", function (ev) {
+    var b = ev.target.closest("[data-del]");
+    if (!b) return;
+    var id = b.getAttribute("data-del");
+    entries = entries.filter(function (e) { return e.id !== id; });
+    save(K_E, entries); renderAll();
+  });
+  $("clearBtn").addEventListener("click", function () { $("clearBtn").hidden = true; $("confirmBox").hidden = false; });
+  $("noBtn").addEventListener("click", function () { $("confirmBox").hidden = true; renderHistory(); });
+  $("yesBtn").addEventListener("click", function () {
+    entries = []; save(K_E, entries); $("confirmBox").hidden = true; renderAll();
+  });
+
+  $("langBg").addEventListener("click", function () { S.lang = "bg"; save(K_S, S); renderAll(); });
+  $("langEn").addEventListener("click", function () { S.lang = "en"; save(K_S, S); renderAll(); });
+  $("curSel").addEventListener("change", function () { S.cur = this.value; save(K_S, S); renderAll(); });
+
+  var navBtns = document.querySelectorAll(".nav button");
+  for (var i = 0; i < navBtns.length; i++) {
+    navBtns[i].addEventListener("click", function () { go(this.getAttribute("data-go")); });
+  }
+
+  /* ---------- старт ---------- */
+  var st = load(K_S, {});
+  if (st.lang === "en" || st.lang === "bg") S.lang = st.lang;
+  if (st.cur && CURS[st.cur]) S.cur = st.cur;
+  entries = load(K_E, []);
+  goals = load(K_G, []);
+  if (!Array.isArray(entries)) entries = [];
+  if (!Array.isArray(goals)) goals = [];
+  renderAll();
+
+  try { parent.postMessage("moite-pari-ok", "*"); } catch (e) {}
+})();
+</script>
+</body>
+</html>
