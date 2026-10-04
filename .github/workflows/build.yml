@@ -44,6 +44,7 @@ jobs:
           mkdir www
           cp ../loader.html www/index.html
           cp ../app.html www/app.html
+          cp ../core.js www/core.js
           sed -i "s|__REPO__|${{ github.repository }}|g; s|__BRANCH__|${{ github.event.repository.default_branch }}|g" www/index.html
           grep -n "raw.githubusercontent.com" www/index.html
           npx cap init "Моите пари" com.moitepari.app --web-dir www
