@@ -1,0 +1,2874 @@
+<!doctype html>
+<html lang="bg">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050506">
+<meta name="moite-pari-app" content="1.8">
+<title>Моите пари</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
+<style>
+.sub.over { color: var(--out); font-weight: 700; }
+:root {
+  --bg: #050506;
+  --fg: #f4f4f5;
+  --muted: #a3a3a8;
+  --card: #2a2a2c;
+  --card-a: #2a2a2c;
+  --field: #2f2f32;
+  --line: #3a3a3d;
+  --nav: #0d0d0f;
+  --nav-a: #0d0d0f;
+  --track: #1b1b1d;
+  --accent: #2f6bd0;
+  --accent-fg: #ffffff;
+  --accent-text: #8db4ff;
+  --in: #6fd69a;
+  --out: #ff9b8f;
+  --scrim: rgba(5,5,6,.55);
+  --font: "Roboto", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html { min-height: 100%; background: var(--bg); }
+body { min-height: 100%; margin: 0; background: transparent; }
+body {
+  color: var(--fg);
+  font-family: var(--font);
+  font-size: 16px;
+  padding-inline: 16px;
+  padding-top: calc(16px + env(safe-area-inset-top, 0px));
+  padding-bottom: calc(104px + env(safe-area-inset-bottom, 0px));
+}
+[hidden] { display: none !important; }
+.photo { position: fixed; inset: 0; z-index: -2; background-size: cover; background-position: center; background-repeat: no-repeat; }
+.scrim { position: fixed; inset: 0; z-index: -1; background: var(--scrim); }
+.app { max-width: 480px; margin-inline: auto; }
+.page { display: flex; flex-direction: column; gap: 16px; }
+.card { background: var(--card-a); border: 1px solid var(--line); border-radius: 28px; padding: 24px; }
+.has-photo .card { backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+h2 { margin: 0; font-size: 22px; font-weight: 700; }
+h3 { margin: 0; font-size: 18px; font-weight: 700; overflow-wrap: anywhere; }
+
+.chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+.chips::-webkit-scrollbar { display: none; }
+.chip { flex: none; height: 40px; padding: 0 16px; border-radius: 999px; font-size: 15px; font-weight: 500; background: var(--card-a); max-width: 70vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); font-weight: 700; }
+
+.balance { text-align: center; padding-block: 28px; }
+.balance .label { color: var(--muted); font-size: 15px; overflow-wrap: anywhere; }
+.balance .value { font-size: 44px; font-weight: 700; margin-top: 6px; font-variant-numeric: tabular-nums; letter-spacing: -0.5px; overflow-wrap: anywhere; }
+.balance .value.neg { color: var(--out); }
+.balance .sub { color: var(--muted); font-size: 15px; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.balance .tot { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.balance .tot b { color: var(--fg); font-weight: 700; }
+
+label.lbl { display: block; font-size: 15px; font-weight: 500; margin-bottom: 10px; }
+.field { display: flex; flex-direction: column; gap: 12px; }
+input, select {
+  width: 100%; min-width: 0; background: var(--field); color: var(--fg);
+  border: 1px solid var(--line); border-radius: 22px; font: inherit;
+  padding: 0 20px; outline: none; height: 52px;
+}
+select { padding-inline: 16px; }
+textarea { width: 100%; min-height: 120px; background: var(--field); color: var(--fg); border: 1px solid var(--line); border-radius: 22px; font: inherit; font-size: 13px; padding: 14px 18px; outline: none; resize: vertical; }
+input::placeholder { color: #8a8d99; }
+input:focus-visible, select:focus-visible { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(47,107,208,.35); }
+input.bad { border-color: var(--out); }
+input[type="range"] { height: 32px; padding: 0; background: transparent; border: 0; accent-color: var(--accent); }
+#amount { height: 80px; text-align: center; font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+button { font: inherit; cursor: pointer; border: 1px solid var(--line); color: var(--fg); background: transparent; }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+.btn { height: 80px; border-radius: 24px; font-size: 24px; font-weight: 700; min-width: 0; }
+.btn.add { background: var(--card); }
+.btn.spend, .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+.btn:active, .sbtn:active { transform: scale(.98); }
+.sbtn { height: 52px; border-radius: 20px; font-size: 17px; font-weight: 700; padding-inline: 18px; min-width: 0; }
+.sbtn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+.sbtn.full { width: 100%; }
+.link { border: 0; color: var(--muted); font-size: 15px; padding: 8px 4px; }
+.link.accent { color: var(--accent-text); font-weight: 500; }
+.link.danger { color: var(--out); }
+.msg { color: var(--out); font-size: 14px; margin: 0; }
+
+.head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.head.mb { margin-bottom: 18px; }
+.confirm { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; color: var(--muted); font-size: 15px; }
+.confirm button { border-radius: 12px; padding: 8px 14px; font-size: 15px; }
+.confirm .yes { background: var(--out); color: #2b0b07; border-color: var(--out); font-weight: 700; }
+.empty { color: var(--muted); font-size: 16px; margin: 0; line-height: 1.45; }
+
+ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+li { display: flex; align-items: center; gap: 12px; padding-block: 12px; border-top: 1px solid var(--line); }
+li:first-child { border-top: 0; padding-top: 0; }
+li:last-child { padding-bottom: 0; }
+.meta { flex: 1; min-width: 0; }
+.meta .t { font-weight: 500; overflow-wrap: anywhere; }
+.meta .d { color: var(--muted); font-size: 13px; margin-top: 2px; overflow-wrap: anywhere; }
+.amt { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.amt.in { color: var(--in); }
+.amt.out { color: var(--out); }
+.amt.goal { color: var(--accent-text); }
+.del { border: 0; color: var(--muted); font-size: 22px; line-height: 1; width: 36px; height: 36px; border-radius: 10px; }
+.day + .day { margin-top: 22px; }
+.day h3 { font-size: 14px; font-weight: 500; color: var(--muted); text-transform: capitalize; margin-bottom: 12px; }
+
+.goalform, .col { display: flex; flex-direction: column; gap: 14px; }
+.row2 { display: grid; grid-template-columns: 1fr 1.3fr; gap: 12px; }
+.formactions { display: flex; gap: 10px; }
+.formactions .sbtn { flex: 1; }
+.setrow { display: flex; flex-direction: column; gap: 10px; }
+.card > .setrow + .setrow { margin-top: 22px; }
+
+.goal { display: flex; flex-direction: column; gap: 14px; }
+.g-sub { color: var(--muted); font-size: 14px; white-space: nowrap; }
+.g-amounts { font-variant-numeric: tabular-nums; }
+.g-amounts strong { font-size: 28px; font-weight: 700; }
+.g-amounts span { color: var(--muted); font-size: 15px; }
+.bar { height: 10px; background: var(--track); border-radius: 999px; overflow: hidden; }
+.bar > div { height: 100%; background: var(--accent); border-radius: 999px; }
+.bar.done > div { background: var(--in); }
+.g-perday { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 15px; }
+.g-perday b { color: var(--fg); font-variant-numeric: tabular-nums; }
+.g-done { text-align: center; color: var(--in); font-weight: 700; padding-block: 10px; }
+.other { display: flex; flex-direction: column; gap: 10px; }
+.other .formactions { gap: 8px; }
+.g-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.total { text-align: center; padding-block: 28px; }
+.total .label { color: var(--muted); font-size: 15px; }
+.total .value { font-size: 40px; font-weight: 700; margin-top: 6px; font-variant-numeric: tabular-nums; letter-spacing: -0.5px; overflow-wrap: anywhere; }
+.brk { margin-top: 18px; padding-top: 6px; border-top: 1px solid var(--line); text-align: left; }
+.brk li { padding-block: 10px; border-top: 0; justify-content: space-between; }
+.brk li span:first-child { color: var(--muted); overflow-wrap: anywhere; min-width: 0; }
+.brk li span:last-child { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.trip { display: flex; flex-direction: column; gap: 10px; padding-block: 16px; border-top: 1px solid var(--line); }
+.trip:first-child { border-top: 0; padding-top: 0; }
+.trip .tv { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.trip .ts { color: var(--muted); font-size: 14px; }
+
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.seg button { height: 52px; border-radius: 20px; font-size: 17px; font-weight: 500; }
+.seg button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); font-weight: 700; }
+.swatches { display: flex; flex-wrap: wrap; gap: 10px; }
+.sw { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--line); padding: 0; }
+.sw[aria-pressed="true"] { border-color: var(--fg); box-shadow: 0 0 0 2px var(--card); }
+.sl { display: grid; grid-template-columns: 28px 1fr; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+.note { color: var(--muted); font-size: 13px; margin: 0; line-height: 1.4; }
+.status { text-align: center; color: var(--muted); font-size: 13px; margin: 0; }
+
+.chip svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; margin-left: 6px; vertical-align: -1px; }
+.modal { position: fixed; inset: 0; z-index: 20; background: rgba(0,0,0,.62); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.modal-card { width: 100%; max-width: 440px; background: var(--card); border: 1px solid var(--line); border-radius: 28px; padding: 24px; display: flex; flex-direction: column; gap: 14px; }
+.hint { color: var(--muted); font-size: 13px; margin: 0; font-variant-numeric: tabular-nums; }
+.fieldrow { display: flex; flex-direction: column; gap: 8px; }
+.fieldrow .top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.sumline { font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.quick { margin-bottom: 16px; flex-wrap: wrap; overflow: visible; }
+.quick .chip { height: 38px; font-size: 14px; max-width: 100%; }
+.quick .chip.q-in { border-color: var(--in); }
+.quick .chip.q-add { color: var(--accent-text); border-style: dashed; }
+.toast { position: fixed; left: 16px; right: 16px; bottom: calc(92px + env(safe-area-inset-bottom, 0px)); z-index: 15; max-width: 448px; margin-inline: auto; background: var(--fg); color: var(--bg); border-radius: 18px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; font-weight: 500; font-size: 15px; box-shadow: 0 8px 24px rgba(0,0,0,.35); }
+.toast button { border: 0; color: var(--bg); font-weight: 700; text-decoration: underline; padding: 6px 4px; font-size: 15px; }
+.fc { display: flex; flex-direction: column; gap: 6px; padding: 18px 24px; }
+.fc .fc-h { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; font-weight: 500; }
+.fc .fc-m { font-size: 18px; font-weight: 700; overflow-wrap: anywhere; }
+.fc .fc-m.warn { color: #f0b34a; }
+.fc .fc-m.bad { color: var(--out); }
+.fc .fc-s { color: var(--muted); font-size: 14px; font-variant-numeric: tabular-nums; }
+.dsum { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+.dsum > div { background: var(--field); border: 1px solid var(--line); border-radius: 20px; padding: 14px; display: flex; flex-direction: column; gap: 4px; }
+.dsum small { color: var(--muted); font-size: 13px; }
+.dsum b { font-size: 19px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.dsum .pos b { color: var(--in); }
+.dsum .neg b { color: var(--out); }
+.debt { display: flex; flex-direction: column; gap: 8px; padding-block: 16px; border-top: 1px solid var(--line); }
+.debt:first-child { border-top: 0; padding-top: 0; }
+.debt .dh { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.debt .dv { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.debt .dv.pos { color: var(--in); }
+.debt .dv.neg { color: var(--out); }
+.debt .ds { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.debt.done { opacity: .6; }
+.check { display: flex; align-items: flex-start; gap: 12px; font-size: 15px; }
+.check input { width: 24px; height: 24px; padding: 0; flex: none; accent-color: var(--accent); margin-top: 1px; }
+.check span { display: flex; flex-direction: column; gap: 2px; }
+.people { display: flex; flex-direction: column; margin-bottom: 18px; background: var(--field); border: 1px solid var(--line); border-radius: 20px; padding: 6px 14px; }
+.people .p { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-block: 10px; border-top: 1px solid var(--line); }
+.people .p:first-of-type { border-top: 0; }
+.people .pn { font-weight: 500; overflow-wrap: anywhere; }
+.people .ps { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.people .pv { font-weight: 700; font-size: 14px; text-align: right; font-variant-numeric: tabular-nums; }
+.people .pv.pos { color: var(--in); } .people .pv.neg { color: var(--out); } .people .pv.eq { color: var(--muted); }
+.people .ph { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .6px; padding-top: 10px; }
+.qrow { display: flex; align-items: center; gap: 12px; padding-block: 10px; border-top: 1px solid var(--line); }
+.qrow:first-child { border-top: 0; }
+.topbar { display: flex; justify-content: flex-end; margin-bottom: 8px; min-height: 44px; }
+.gear { width: 44px; height: 44px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; background: var(--card-a); color: var(--muted); }
+.gear svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.gear[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+.nav {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
+  background: var(--nav-a); border-top: 1px solid var(--line);
+  padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px));
+}
+.has-photo .nav { backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+.nav-in { max-width: 480px; margin-inline: auto; display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; }
+.nav button { border: 0; background: transparent; color: var(--muted); display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; font-weight: 500; padding: 8px 0 6px; border-radius: 16px; min-width: 0; }
+.nav button svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.nav button[aria-current="page"] { color: var(--fg); background: var(--card); }
+.nav button span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { .btn:active, .sbtn:active { transform: none; } }
+</style>
+</head>
+<body>
+<div class="photo" id="photoLayer" hidden></div>
+<div class="scrim" id="scrimLayer" hidden></div>
+<main class="app">
+  <div class="topbar"><button type="button" class="gear" id="gearBtn" aria-label="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></button></div>
+
+  <!-- Начало -->
+  <div class="page" id="page-home">
+    <div class="chips" id="chips" role="group"></div>
+
+    <section class="card balance" aria-live="polite">
+      <div class="label" id="balLabel"></div>
+      <div class="value" id="balance"></div>
+      <div class="sub" id="balSub" hidden></div>
+      <div class="tot" id="balTotal"></div>
+      <button class="link" id="lockNow" type="button" data-i18n="lock" hidden style="margin-top:8px"></button>
+    </section>
+
+    <section class="card fc" id="fcCard" hidden aria-live="polite">
+      <div class="fc-h" data-i18n="fcTitle"></div>
+      <div class="fc-m" id="fcMain"></div>
+      <div class="fc-s" id="fcSub"></div>
+    </section>
+
+    <section class="card">
+      <div class="chips quick" id="quick" role="group"></div>
+      <label class="lbl" for="amount" id="amtLbl"></label>
+      <div class="field">
+        <input id="amount" type="text" inputmode="decimal" autocomplete="off" data-i18n-ph="amountPh">
+        <input id="note" type="text" autocomplete="off" maxlength="60" data-i18n-ph="notePh">
+      </div>
+      <p class="msg" id="homeMsg" style="margin-top:12px" hidden></p>
+      <div class="actions">
+        <button class="btn add" id="addBtn" type="button" data-i18n="income"></button>
+        <button class="btn spend" id="spendBtn" type="button" data-i18n="expense"></button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="head mb">
+        <h2 data-i18n="recent"></h2>
+        <button class="link accent" id="viewAll" type="button" data-i18n="viewAll" hidden></button>
+      </div>
+      <p class="empty" id="homeEmpty" data-i18n="none"></p>
+      <ul id="homeList"></ul>
+    </section>
+    <p class="status" data-i18n="storageNote"></p>
+  </div>
+
+  <!-- Портфейли -->
+  <div class="page" id="page-wallets" hidden>
+    <section class="card total">
+      <div class="label" data-i18n="totalAll"></div>
+      <div class="value" id="totalVal"></div>
+      <button class="sbtn" id="revealBtn" type="button" data-i18n="showTotal" hidden style="margin-top:14px"></button>
+      <ul class="brk" id="breakdown"></ul>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="transfer" style="margin-bottom:18px"></h2>
+      <div class="col">
+        <div class="setrow" style="gap:8px">
+          <label class="lbl" for="xAmt" id="xAmtLbl" style="margin:0"></label>
+          <input id="xAmt" type="text" inputmode="decimal" autocomplete="off" data-i18n-ph="amountPh">
+        </div>
+        <div class="row2" style="grid-template-columns:1fr 1fr">
+          <div class="setrow" style="gap:8px">
+            <label class="lbl" for="xFrom" data-i18n="from" style="margin:0"></label>
+            <select id="xFrom"></select>
+          </div>
+          <div class="setrow" style="gap:8px">
+            <label class="lbl" for="xTo" data-i18n="to" style="margin:0"></label>
+            <select id="xTo"></select>
+          </div>
+        </div>
+        <p class="msg" id="xMsg" hidden></p>
+        <button class="sbtn primary full" id="xBtn" type="button" data-i18n="doTransfer"></button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="head mb">
+        <h2 data-i18n="trips"></h2>
+        <button class="link accent" id="newTripBtn" type="button" data-i18n="newTrip"></button>
+      </div>
+      <div class="col" id="tripForm" hidden style="margin-bottom:20px">
+        <div class="setrow" style="gap:8px">
+          <label class="lbl" for="tName" data-i18n="tripName" style="margin:0"></label>
+          <input id="tName" type="text" maxlength="40" autocomplete="off" data-i18n-ph="tripNamePh">
+        </div>
+        <div class="setrow" style="gap:8px">
+          <label class="lbl" for="tCur" data-i18n="tripCur" style="margin:0"></label>
+          <select id="tCur"></select>
+        </div>
+        <div class="fieldrow">
+          <div class="top">
+            <label class="lbl" for="tMain" data-i18n="tripFromMain" style="margin:0"></label>
+            <span class="hint" id="tHintMain"></span>
+          </div>
+          <input id="tMain" type="text" inputmode="decimal" autocomplete="off" placeholder="0">
+        </div>
+        <div class="fieldrow">
+          <div class="top">
+            <label class="lbl" for="tVault" data-i18n="tripFromVault" style="margin:0"></label>
+            <span class="hint" id="tHintVault"></span>
+          </div>
+          <select id="tVaultSel" aria-label="vault" hidden></select>
+          <input id="tVault" type="text" inputmode="decimal" autocomplete="off" placeholder="0">
+          <button class="sbtn" id="tUnlock" type="button" data-i18n="unlockVault" hidden></button>
+        </div>
+        <div class="sumline" id="tSumLine" hidden></div>
+        <p class="msg" id="tMsg" hidden></p>
+        <div class="formactions">
+          <button class="sbtn" id="tCancel" type="button" data-i18n="cancel"></button>
+          <button class="sbtn primary" id="tCreate" type="button" data-i18n="startTrip"></button>
+        </div>
+      </div>
+      <p class="empty" id="tripEmpty" data-i18n="noTrips"></p>
+      <div id="tripList"></div>
+    </section>
+
+    <section class="card" id="debtCard">
+      <div class="head mb">
+        <h2 data-i18n="debts"></h2>
+        <button class="link accent" id="newDebtBtn" type="button" data-i18n="debtNew"></button>
+      </div>
+      <div class="dsum" id="dSum" hidden>
+        <div class="pos"><small data-i18n="debtOwedMe"></small><b id="dSumMe"></b></div>
+        <div class="neg"><small data-i18n="debtIOwe"></small><b id="dSumI"></b></div>
+      </div>
+      <div class="people" id="dPeople" hidden></div>
+      <div class="col" id="debtForm" hidden style="margin-bottom:20px">
+        <div class="seg" role="group">
+          <button type="button" id="dLent" aria-pressed="true" data-i18n="debtLent"></button>
+          <button type="button" id="dBorrowed" aria-pressed="false" data-i18n="debtBorrowed"></button>
+        </div>
+        <div class="setrow" style="gap:8px">
+          <label class="lbl" for="dWho" data-i18n="debtWho" style="margin:0"></label>
+          <input id="dWho" type="text" maxlength="40" autocomplete="off" list="dNames" data-i18n-ph="debtWhoPh">
+          <datalist id="dNames"></datalist>
+          <p class="hint" id="dHint" hidden></p>
+        </div>
+        <div class="row2" style="grid-template-columns:1.3fr 1fr">
+          <div class="setrow" style="gap:8px">
+            <label class="lbl" for="dAmt" data-i18n="debtAmt" style="margin:0"></label>
+            <input id="dAmt" type="text" inputmode="decimal" autocomplete="off" data-i18n-ph="amountPh">
+          </div>
+          <div class="setrow" style="gap:8px">
+            <label class="lbl" for="dCur" data-i18n="tripCur" style="margin:0"></label>
+            <select id="dCur"></select>
+          </div>
+        </div>
+        <input id="dNote" type="text" maxlength="60" autocomplete="off" data-i18n-ph="notePh">
+        <label class="check"><input type="checkbox" id="dTrack" checked><span><b data-i18n="debtTrack" style="font-weight:500"></b><small class="note" data-i18n="debtTrackNote"></small></span></label>
+        <p class="msg" id="dMsg" hidden></p>
+        <div class="formactions">
+          <button class="sbtn" id="dCancel" type="button" data-i18n="cancel"></button>
+          <button class="sbtn primary" id="dCreate" type="button" data-i18n="create2"></button>
+        </div>
+      </div>
+      <p class="empty" id="debtEmpty" data-i18n="debtNone"></p>
+      <div id="debtList"></div>
+      <div id="debtDone"></div>
+    </section>
+  </div>
+
+  <!-- Спестявания -->
+  <div class="page" id="page-savings" hidden>
+    <section class="card total">
+      <div class="label" data-i18n="savTitle"></div>
+      <div class="value" id="savVal"></div>
+      <button class="sbtn" id="savMove" type="button" data-i18n="savMove" style="margin-top:14px"></button>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="savAutoTitle" style="margin-bottom:6px"></h2>
+      <p class="note" data-i18n="savAutoNote" style="margin-bottom:18px"></p>
+      <div class="col">
+        <label class="check"><input type="checkbox" id="sEod"><span><b data-i18n="savEod" style="font-weight:500"></b><small class="note" data-i18n="savEodNote"></small></span></label>
+        <p class="note" id="sEodHint" hidden style="color:var(--out)"></p>
+        <label class="check"><input type="checkbox" id="sCapOn"><span><b data-i18n="savCap" style="font-weight:500"></b><small class="note" data-i18n="savCapNote"></small></span></label>
+        <div class="setrow" style="gap:8px">
+          <label class="lbl" for="sCapAmt" id="sCapLbl" style="margin:0"></label>
+          <input id="sCapAmt" type="text" inputmode="decimal" autocomplete="off" placeholder="0">
+        </div>
+        <p class="msg" id="sMsg" hidden></p>
+        <button class="sbtn primary" id="sCapSave" type="button" data-i18n="save"></button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="head mb"><h2 data-i18n="savHist"></h2></div>
+      <p class="empty" id="savEmpty" data-i18n="savEmpty"></p>
+      <ul id="savList"></ul>
+    </section>
+
+    <section class="card" id="cryCard">
+      <div class="head mb">
+        <h2 data-i18n="cryTitle"></h2>
+        <button class="link accent" id="cryRefresh" type="button" data-i18n="cryRefresh"></button>
+      </div>
+      <p class="empty" id="cryEmpty" data-i18n="cryEmpty"></p>
+      <div id="cryBody" hidden>
+        <div class="total" style="padding:0 0 6px"><div class="label" data-i18n="cryTotal"></div><div class="value" id="cryVal" style="font-size:32px"></div></div>
+        <ul class="brk" id="cryList"></ul>
+        <p class="note" id="cryNote" style="margin-top:12px"></p>
+        <label class="check" style="margin-top:14px"><input type="checkbox" id="cryTot"><span><b data-i18n="cryInTotal" style="font-weight:500"></b></span></label>
+      </div>
+    </section>
+  </div>
+
+  <!-- Цели -->
+  <div class="page" id="page-goals" hidden>
+    <div class="head" style="padding-inline:4px">
+      <h2 data-i18n="goals"></h2>
+      <button class="link accent" id="newGoalBtn" type="button" data-i18n="newGoal"></button>
+    </div>
+
+    <section class="card" id="goalForm" hidden>
+      <div class="goalform">
+        <div class="setrow" style="gap:8px">
+          <label class="lbl" for="gName" data-i18n="goalName" style="margin:0"></label>
+          <input id="gName" type="text" maxlength="40" autocomplete="off" data-i18n-ph="goalNamePh">
+        </div>
+        <div class="setrow" style="gap:8px">
+          <label class="lbl" for="gTarget" id="gTargetLbl" style="margin:0"></label>
+          <input id="gTarget" type="text" inputmode="decimal" autocomplete="off" data-i18n-ph="goalTargetPh">
+        </div>
+        <div class="setrow" style="gap:8px">
+          <label class="lbl" for="gTime" data-i18n="goalTime" style="margin:0"></label>
+          <div class="row2">
+            <input id="gTime" type="text" inputmode="numeric" autocomplete="off" placeholder="3">
+            <select id="gUnit" aria-label="unit">
+              <option value="days" data-i18n="unitDays"></option>
+              <option value="weeks" data-i18n="unitWeeks"></option>
+              <option value="months" data-i18n="unitMonths" selected></option>
+            </select>
+          </div>
+        </div>
+        <p class="msg" id="formMsg" hidden></p>
+        <div class="formactions">
+          <button class="sbtn" id="gCancel" type="button" data-i18n="cancel"></button>
+          <button class="sbtn primary" id="gCreate" type="button" data-i18n="create"></button>
+        </div>
+      </div>
+    </section>
+
+    <p class="empty card" id="goalsEmpty" data-i18n="noGoals"></p>
+    <div class="page" id="goalList"></div>
+  </div>
+
+  <!-- История -->
+  <div class="page" id="page-history" hidden>
+    <section class="card">
+      <div class="head mb">
+        <h2 data-i18n="history"></h2>
+        <button class="link" id="clearBtn" type="button" data-i18n="clear" hidden></button>
+        <div class="confirm" id="confirmBox" hidden>
+          <span data-i18n="clearQ"></span>
+          <button class="yes" id="yesBtn" type="button" data-i18n="del"></button>
+          <button id="noBtn" type="button" data-i18n="no"></button>
+        </div>
+      </div>
+      <p class="empty" id="histEmpty" data-i18n="none"></p>
+      <div id="histList"></div>
+    </section>
+  </div>
+
+  <!-- Настройки -->
+  <div class="page" id="page-settings" hidden>
+    <section class="card">
+      <div class="setrow">
+        <h3 data-i18n="language"></h3>
+        <div class="seg" role="group">
+          <button type="button" id="langBg">Български</button>
+          <button type="button" id="langEn">English</button>
+        </div>
+      </div>
+      <div class="setrow">
+        <label for="curSel"><h3 data-i18n="currency"></h3></label>
+        <select id="curSel"></select>
+        <p class="note" data-i18n="currencyNote"></p>
+        <p class="note" id="rateNote"></p>
+        <button class="sbtn" id="rateBtn" type="button" data-i18n="refresh"></button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="setrow">
+        <h3 data-i18n="appearance"></h3>
+        <p class="note" data-i18n="bgColor" style="font-weight:500;color:var(--fg);font-size:15px"></p>
+        <div class="swatches" id="bgPick"></div>
+        <p class="note" data-i18n="accentColor" style="font-weight:500;color:var(--fg);font-size:15px;margin-top:8px"></p>
+        <div class="swatches" id="acPick"></div>
+      </div>
+      <div class="setrow">
+        <h3 data-i18n="photo"></h3>
+        <div class="formactions">
+          <button class="sbtn" id="photoBtn" type="button" data-i18n="pickPhoto"></button>
+          <button class="sbtn" id="photoRm" type="button" data-i18n="removePhoto" hidden></button>
+        </div>
+        <input type="file" id="photoFile" accept="image/*" hidden>
+        <div id="dimBox" hidden>
+          <label class="note" for="dim" style="font-weight:500;color:var(--fg);font-size:15px" data-i18n="dim"></label>
+          <input type="range" id="dim" min="0" max="90" step="1">
+        </div>
+        <div id="glassBox" hidden>
+          <label class="note" for="glass" style="font-weight:500;color:var(--fg);font-size:15px" data-i18n="glass"></label>
+          <input type="range" id="glass" min="0" max="85" step="1">
+        </div>
+        <p class="msg" id="photoMsg" hidden></p>
+      </div>
+    </section>
+
+    <section class="card" id="apiCard">
+      <div class="setrow">
+        <h3 data-i18n="apiTitle"></h3>
+        <p class="note" data-i18n="apiNote"></p>
+        <div id="apiList"></div>
+        <p class="note" data-i18n="apiRevolut"></p>
+        <p class="msg" id="apiMsg" hidden></p>
+      </div>
+    </section>
+
+    <section class="card" id="impCard">
+      <div class="setrow">
+        <h3 data-i18n="impTitle"></h3>
+        <p class="note" data-i18n="impNote"></p>
+        <label class="lbl" for="impDest" data-i18n="impDest" style="margin:0"></label>
+        <select id="impDest"></select>
+        <button class="sbtn primary" id="impBtn" type="button" data-i18n="impPick"></button>
+        <input type="file" id="impFile" accept=".csv,.txt,text/csv,text/plain" hidden>
+        <div id="impPreview" hidden class="col">
+          <p class="note" id="impSum" style="color:var(--fg);font-size:14px;line-height:1.55;white-space:pre-line"></p>
+          <div class="formactions">
+            <button class="sbtn" id="impNo" type="button" data-i18n="cancel"></button>
+            <button class="sbtn primary" id="impYes" type="button" data-i18n="impConfirm"></button>
+          </div>
+        </div>
+        <p class="msg" id="impMsg" hidden></p>
+        <div id="impList"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="setrow">
+        <h3 data-i18n="quickTitle"></h3>
+        <p class="note" data-i18n="quickNote"></p>
+        <div id="qList"></div>
+        <input id="qName" type="text" maxlength="24" autocomplete="off" data-i18n-ph="quickNamePh">
+        <div class="row2" style="grid-template-columns:1fr 1fr">
+          <input id="qAmt" type="text" inputmode="decimal" autocomplete="off" data-i18n-ph="amountPh">
+          <select id="qType" aria-label="type"><option value="out" data-i18n="typeOut"></option><option value="in" data-i18n="typeIn"></option></select>
+        </div>
+        <p class="msg" id="qMsg" hidden></p>
+        <button class="sbtn primary" id="qAdd" type="button" data-i18n="quickAdd"></button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="setrow">
+        <h3 data-i18n="allowTitle"></h3>
+        <p class="note" data-i18n="allowNote"></p>
+        <label class="lbl" for="aAmt" id="aLbl"></label>
+        <input id="aAmt" type="text" inputmode="decimal" autocomplete="off" placeholder="0">
+        <p class="msg" id="aMsg" hidden></p>
+        <div class="col">
+          <button class="sbtn primary" id="aSave" type="button" data-i18n="save"></button>
+          <button class="sbtn" id="aOff" type="button" data-i18n="allowOff" hidden></button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="setrow">
+        <h3 data-i18n="fcSet"></h3>
+        <label class="check"><input type="checkbox" id="fcOn"><span><b data-i18n="fcShow" style="font-weight:500"></b></span></label>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="setrow">
+        <h3 data-i18n="vaultsTitle"></h3>
+        <p class="note" data-i18n="vaultsNote"></p>
+        <div id="vList"></div>
+        <input id="vName" type="text" maxlength="24" autocomplete="off" data-i18n-ph="vaultNamePh">
+        <p class="msg" id="vMsg" hidden></p>
+        <button class="sbtn primary" id="vAdd" type="button" data-i18n="vaultAdd"></button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="setrow">
+        <h3 data-i18n="vaultPw"></h3>
+        <p class="note" data-i18n="vaultPwNote"></p>
+        <p class="note" id="pwStatus" style="font-weight:500;color:var(--fg);font-size:15px"></p>
+        <div class="col" id="pwBtns"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="setrow">
+        <h3 data-i18n="version"></h3>
+        <p class="note" id="verText"></p>
+        <p class="note" data-i18n="updNote"></p>
+      </div>
+    </section>
+  </div>
+</main>
+
+<div class="toast" id="toast" role="status" hidden><span id="toastText"></span><button type="button" id="toastUndo"></button></div>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true" hidden>
+  <div class="modal-card">
+    <h2 id="mTitle"></h2>
+    <p class="note" id="mText" hidden></p>
+    <div class="col" id="mFields"></div>
+    <p class="msg" id="mMsg" hidden></p>
+    <div class="formactions">
+      <button class="sbtn" id="mCancel" type="button"></button>
+      <button class="sbtn primary" id="mOk" type="button"></button>
+    </div>
+  </div>
+</div>
+
+<nav class="nav" aria-label="Menu">
+  <div class="nav-in">
+    <button type="button" data-go="home">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5h13V10"/></svg>
+      <span data-i18n="navHome"></span>
+    </button>
+    <button type="button" data-go="wallets">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18"/><circle cx="16.5" cy="14.5" r="1"/></svg>
+      <span data-i18n="navWallets"></span>
+    </button>
+    <button type="button" data-go="savings">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v10M14.6 9.6c-.4-.9-1.4-1.4-2.6-1.4-1.5 0-2.6.8-2.6 1.9 0 2.6 5.2 1.3 5.2 3.9 0 1.1-1.1 1.9-2.6 1.9-1.3 0-2.3-.5-2.7-1.5"/></svg>
+      <span data-i18n="navSavings"></span>
+    </button>
+    <button type="button" data-go="goals">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="0.8"/></svg>
+      <span data-i18n="navGoals"></span>
+    </button>
+    <button type="button" data-go="history">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>
+      <span data-i18n="navHistory"></span>
+    </button>
+  </div>
+</nav>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var VERSION = "1.8";
+  var K_E = "moite-pari-v1", K_G = "moite-pari-goals-v1", K_S = "moite-pari-settings-v1";
+  var K_T = "moite-pari-trips-v1", K_R = "moite-pari-rates-v1", K_P = "moite-pari-photo-v1";
+
+  var T = {
+    bg: {
+      navHome: "Начало", navWallets: "Портфейли", navGoals: "Цели", navHistory: "История", navSettings: "Настройки",
+      balance: "Текущ баланс", amount: "Сума", amountPh: "Напр. 50", notePh: "Бележка (по желание)",
+      income: "+ Добави", expense: "− Разход",
+      recent: "Последни движения", viewAll: "Всички", none: "Все още няма движения.",
+      storageNote: "Записите се пазят само на този телефон.",
+      history: "История", clear: "Изчисти", clearQ: "Всички записи във всички сметки? Прогресът по целите също се нулира.",
+      del: "Изтрий", no: "Не", today: "Днес", yesterday: "Вчера",
+      defIn: "Приход", defOut: "Разход", toGoal: "В цел: ", fromGoal: "От цел: ", delRow: "Изтрий записа",
+      wMain: "Портфейл", wVault: "Сейф", tripWord: "Екскурзия",
+      totalAll: "Общо във всички сметки", inGoals: "В цели",
+      transfer: "Прехвърляне", from: "От", to: "Към", doTransfer: "Прехвърли",
+      errSame: "Избери две различни сметки.", errFunds: "Няма достатъчно пари в тази сметка.",
+      trips: "Екскурзии", newTrip: "+ Нова", tripName: "Къде отиваш", tripNamePh: "Напр. Варна",
+      tripBudget: "Колко пари взимаш", tripBudgetPh: "Напр. 500", tripCur: "Валута",
+      startTrip: "Започни", errTripName: "Напиши къде отиваш.", errTripFunds: "Нямаш толкова в портфейла.",
+      noTrips: "Няма активни екскурзии. Започни една и харчиш само от нейния бюджет, докато я приключиш.",
+      openTrip: "Отвори", endTrip: "Приключи", endTripQ: "Остатъкът се връща в портфейла, а записите отиват в историята.",
+      budgetLeft: "остават",
+      apiTitle: "Връзка с борси (API)", apiNote: "Салдата на Binance, Coinbase и Kraken се обновяват сами. Създай ключ САМО за четене, никога с право за теглене или търгуване. Ключовете се пазят само на този телефон и не са шифровани.",
+      apiConnect: "Свържи", apiRefresh: "Обнови", apiRemove: "Махни", apiOff: "Не е свързан", apiOn: "Свързан · обновено ", apiErrPre: "Грешка: ",
+      apiRevolut: "Revolut не дава API за лични сметки. За него използвай CSV импорт по-долу.",
+      apiKey: "API ключ", apiSecret: "Таен ключ (secret)", apiCbName: "Име на ключа (organizations/…/apiKeys/…)", apiCbPem: "Частен ключ (-----BEGIN EC PRIVATE KEY-----…)",
+      apiHintBinance: "Binance → Управление на API → нов ключ само с „Enable Reading“.", apiHintCoinbase: "Coinbase Developer Platform → API ключове с право „View“. Копирай името на ключа и частния ключ.", apiHintKraken: "Kraken → Security → API → само „Query Funds“.",
+      apiRemoveQ: "Да махна ли връзката? Ключът се изтрива от телефона.", apiBadKey: "Попълни всички полета.",
+      apiNetErr: "Няма връзка със сървъра на борсата или заявката е блокирана. Провери интернета и че новият core.js е качен в GitHub.", impApiWins: "За този източник има API връзка и тя има предимство пред CSV.",
+      histCap: "Показани са последните 500 записа.",
+      impTitle: "Импорт от CSV", impNote: "Свали извлечение (CSV) от Revolut, Binance, Coinbase или Kraken и го избери тук. Формата се разпознава сам. Повторен или застъпващ се файл не дублира записи. Файлът не напуска телефона.",
+      impDest: "Къде да влязат записите (за Revolut и общ CSV)", impPick: "Избери CSV файл", impConfirm: "Импортирай",
+      impUnknown: "Не разпознавам формата. Поддържам Revolut, Binance, Coinbase и Kraken.", impBig: "Файлът е твърде голям (над 8 MB).", impReadErr: "Файлът не може да се прочете.",
+      impEmpty: "Няма нови записи в този файл. Всичко вече е импортирано.", impRecog: "Разпознат формат: ", impNewRows: "Нови записи: ", impDup: "Вече налични (пропускат се): ",
+      impSkip: "Пропуснати (неуспешни, чакащи или непознати): ", impBadCur: "Валути без поддръжка: ", impPeriod: "Период: ", impInOut: "Приходи: {a} · Разходи: {b}",
+      impBal: "Салдо по файла: ", impAssets: "Активи: ", impFiatIgnored: "Парите във фиат валута (EUR, USD…) в крипто файловете се пропускат.",
+      impDone: "Импортирани: ", impList: "Направени импорти", impDelQ: "Изтрий?", impRecs: " записа",
+      cryTitle: "Крипто", cryRefresh: "Обнови цените", cryEmpty: "Още няма крипто. Импортирай CSV от Binance, Coinbase или Kraken в Настройки.", cryTotal: "Стойност на крипто",
+      cryInTotal: "Включи крипто в общата сума", cryNoPrice: "няма цена", cryPrices: "Цени от CoinGecko, ", cryNoNet: "Цените не се заредиха. Показано е само количеството.",
+      cryNote2: "Количествата идват от импортираните файлове и може да са непълни, ако файлът не покрива цялата история.",
+      navSavings: "Спестено", wSavings: "Спестявания", savTitle: "Спестявания", savMove: "Прехвърли пари",
+      savAutoTitle: "Автоматично спестяване", savAutoNote: "Включи едно или и двете. Парите се местят сами в спестяванията.",
+      savEod: "Остатъкът от дневния лимит", savEodNote: "Непохарченото от лимита за деня отива в спестяванията.",
+      savNeedAllow: "Първо задай дневен лимит в Настройки.",
+      savCap: "Всичко над определена сума", savCapNote: "Когато в портфейла има повече от тази сума, излишъкът отива в спестяванията.",
+      savCapAmt: "Максимум в портфейла", savHist: "Движения", savEmpty: "Още няма движения в спестяванията.",
+      autoEod: "Автоматично: остатък от лимита", autoCap: "Автоматично: над лимита на портфейла",
+      fcSet: "Прогноза", fcShow: "Показвай прогноза на началния екран", glass: "Прозрачност на картите",
+      vaultsTitle: "Сейфове", vaultsNote: "Можеш да имаш няколко сейфа. Паролата важи за всички.", vaultNamePh: "Име на нов сейф", vaultAdd: "Добави сейф",
+      vaultNotEmpty: "Сейфът не е празен. Първо прехвърли парите.", vaultLimit: "Най-много 8 сейфа.", errVName: "Напиши име на сейфа.",
+      peopleTitle: "Хора", pGave: "Дал си: ", pTook: "Взел си: ", pQuits: "Квит", pOwesYou: "Дължи ти ", pYouOwe: "Дължиш му ",
+      dHist: "Преди: дал си му общо {a}, той ти е дал {b}",
+      quickTitle: "Бързи суми", quickNote: "Чести разходи или приходи. Едно докосване на началния екран ги записва в избрания портфейл.",
+      quickNamePh: "Име, напр. Кафе", quickAdd: "Добави бърза сума", quickEmpty: "Още нямаш бързи суми.", quickLimit: "Най-много 12 бързи суми.",
+      errQName: "Напиши име.", typeOut: "Разход", typeIn: "Приход", added: "Добавено: ", undo: "Отмени", quickPlus: "+ Бърза",
+      fcTitle: "Прогноза", fcAvg: "Средно харчиш ", fcPerDay: " на ден", fcDays: "Парите в портфейла стигат за около {n} дни", fcDay1: "Парите в портфейла стигат за около 1 ден",
+      fcUntil: "до ", fcNone: "Парите в портфейла свършиха", fcFew: "Нужни са записи за поне 3 дни, за да се изчисли прогноза.",
+      fcYear: "Парите в портфейла стигат за повече от година", fcNoSpend: "Последните дни не си харчил от портфейла.",
+      debts: "Дългове", debtNew: "+ Нов", debtOwedMe: "Дължат ми", debtIOwe: "Дължа", debtWho: "Име на човека", debtWhoPh: "Напр. Иван",
+      debtLent: "Дадох на…", debtBorrowed: "Взех от…", debtAmt: "Сума", debtTrack: "Отчети в портфейла",
+      debtTrackNote: "Дадената сума излиза от портфейла, а върнатата влиза обратно.", debtNone: "Няма дългове. Добави кой на кого колко дължи.",
+      errDebtWho: "Напиши име.", debtLentTo: "Дадено на ", debtBorrowedFrom: "Взето от ", debtRetFrom: "Върнато от ", debtRetTo: "Върнато на ",
+      debtPay: "Върнато", debtPayAmt: "Колко е върнато", debtConfirm: "Потвърди", errPayMore: "Повече е от остатъка.",
+      debtOf: "върнато {a} от {b}", debtDone: "Уредени", debtDelQ: "Да изтрия ли дълга? Записите в историята остават.",
+      debtOwesYou: "Дължи ти", debtYouOwe: "Дължиш", create2: "Добави",
+      allowTitle: "Дневен лимит (allowance)", allowNote: "Задаваш колко можеш да харчиш на ден. В портфейла се показва само колко остава за днес. Ако надвишиш лимита, виждаш нормалния баланс и предупреждение.",
+      allowLeft: "Остава за днес", allowOf: "от", allowOff: "Изключи лимита", allowOver: "Надвишил си дневния лимит с ", allowOn: "Лимит: ", allowNone: "Лимитът е изключен.", allowSaved: "Запазено.",
+      tripFromMain: "От портфейла", tripFromVault: "От сейфа", available: "Налично: ", tripTotal: "Общо за екскурзията: ",
+      errTripSome: "Въведи сума от портфейла, от сейфа или от двете.",
+      errTripMain: "Нямаш толкова в портфейла.", errTripVault: "Нямаш толкова в сейфа.",
+      unlockVault: "Отключи сейфа", unlockTitle: "Отключи сейфа", pwLabel: "Парола", unlock: "Отключи",
+      wrongPw: "Грешна парола.", tooMany: "Твърде много опити. Изчакай {s} сек.",
+      lock: "Заключи сейфа", showTotal: "Покажи сумата",
+      vaultPw: "Парола за сейфа",
+      vaultPwNote: "Когато е включена, сумите в сейфовете и общата сума се скриват и се виждат само след отключване. Това скрива сумите от погледа, но не е шифроване. Паролата не може да се възстанови. Сейфовете се заключват сами след 5 минути без действие или когато излезеш от приложението.",
+      pwOff: "Паролата не е зададена.", pwOn: "Сейфът е защитен с парола.",
+      setPw: "Задай парола", changePw: "Смени паролата", removePw: "Махни паролата",
+      pwNew: "Нова парола", pwConfirm: "Повтори паролата", pwCurrent: "Сегашна парола",
+      errPwShort: "Паролата трябва да е поне 4 знака.", errPwMatch: "Паролите не съвпадат.",
+      save: "Запази",
+      goals: "Цели", newGoal: "+ Нова цел", goalName: "Име на целта", goalNamePh: "Напр. Почивка",
+      goalTargetPh: "Напр. 1000", goalTime: "За колко време",
+      unitDays: "дни", unitWeeks: "седмици", unitMonths: "месеца",
+      create: "Създай цел", cancel: "Отказ",
+      noGoals: "Още нямаш цели. Задай сума и срок, а приложението ще изчисли колко да отделяш на ден.",
+      of: "от", perDay: "Днешна сума",
+      dueToday: "Срокът е днес", overdue: "Срокът изтече",
+      saveToday: "Отдели ", doneToday: "Днес е готово", reached: "Целта е постигната",
+      other: "Друга сума", put: "Отдели", take: "Върни",
+      errBal: "Нямаш достатъчно в портфейла.", errGoal: "В целта няма толкова.", errAmt: "Въведи сума над 0.",
+      errName: "Напиши име на целта.", errTarget: "Въведи сума над 0.", errTime: "Въведи срок с цяло число.",
+      delGoal: "Изтрий целта", delGoalQ: "Отделените пари се връщат в портфейла.",
+      language: "Език", currency: "Валута",
+      currencyNote: "Сумите се преизчисляват по курс и се закръгляват до 2 знака след запетаята.",
+      refresh: "Обнови курсовете", ratesOk: "Курсове от ", ratesApprox: "Приблизителни курсове. Няма връзка с интернет.", ratesLoading: "Зареждам курсовете…",
+      appearance: "Външен вид", bgColor: "Фон", accentColor: "Акцент",
+      photo: "Снимка за фон", pickPhoto: "Избери снимка", removePhoto: "Махни снимката", dim: "Затъмняване",
+      photoErr: "Снимката не се запази. Опитай с друга.",
+      version: "Версия", updNote: "Обновленията се свалят сами, когато има интернет."
+    },
+    en: {
+      navHome: "Home", navWallets: "Wallets", navGoals: "Goals", navHistory: "History", navSettings: "Settings",
+      balance: "Current balance", amount: "Amount", amountPh: "e.g. 50", notePh: "Note (optional)",
+      income: "+ Income", expense: "− Expense",
+      recent: "Recent activity", viewAll: "View all", none: "No transactions yet.",
+      storageNote: "Your data is stored only on this phone.",
+      history: "History", clear: "Clear", clearQ: "Delete everything in every account? Goal progress resets too.",
+      del: "Delete", no: "No", today: "Today", yesterday: "Yesterday",
+      defIn: "Income", defOut: "Expense", toGoal: "To goal: ", fromGoal: "From goal: ", delRow: "Delete entry",
+      wMain: "Wallet", wVault: "Vault", tripWord: "Trip",
+      totalAll: "Total across all accounts", inGoals: "In goals",
+      transfer: "Transfer", from: "From", to: "To", doTransfer: "Transfer",
+      errSame: "Pick two different accounts.", errFunds: "Not enough money in that account.",
+      trips: "Trips", newTrip: "+ New", tripName: "Where are you going", tripNamePh: "e.g. Paris",
+      tripBudget: "How much money are you taking", tripBudgetPh: "e.g. 500", tripCur: "Currency",
+      startTrip: "Start", errTripName: "Enter where you are going.", errTripFunds: "Not enough in your wallet.",
+      noTrips: "No active trips. Start one and you spend only from its budget until you end it.",
+      openTrip: "Open", endTrip: "End trip", endTripQ: "What is left goes back to your wallet and the entries move to History.",
+      budgetLeft: "left",
+      apiTitle: "Exchange connections (API)", apiNote: "Balances from Binance, Coinbase and Kraken update by themselves. Create a READ-ONLY key, never one that can withdraw or trade. Keys are kept only on this phone, not encrypted.",
+      apiConnect: "Connect", apiRefresh: "Refresh", apiRemove: "Remove", apiOff: "Not connected", apiOn: "Connected · updated ", apiErrPre: "Error: ",
+      apiRevolut: "Revolut has no API for personal accounts. Use the CSV import below for it.",
+      apiKey: "API key", apiSecret: "Secret key", apiCbName: "Key name (organizations/…/apiKeys/…)", apiCbPem: "Private key (-----BEGIN EC PRIVATE KEY-----…)",
+      apiHintBinance: "Binance → API Management → new key with only “Enable Reading”.", apiHintCoinbase: "Coinbase Developer Platform → API keys with the “View” permission. Copy the key name and the private key.", apiHintKraken: "Kraken → Security → API → only “Query Funds”.",
+      apiRemoveQ: "Remove the connection? The key is deleted from this phone.", apiBadKey: "Fill in all fields.",
+      apiNetErr: "Cannot reach the exchange server or the request is blocked. Check your internet and that the new core.js is uploaded to GitHub.", impApiWins: "An API connection exists for this source and takes priority over the CSV.",
+      histCap: "Showing the latest 500 entries.",
+      impTitle: "Import from CSV", impNote: "Download a statement (CSV) from Revolut, Binance, Coinbase or Kraken and pick it here. The format is detected automatically. Repeated or overlapping files do not create duplicates. The file never leaves your phone.",
+      impDest: "Where records go (for Revolut and generic CSV)", impPick: "Choose CSV file", impConfirm: "Import",
+      impUnknown: "I do not recognise this format. Supported: Revolut, Binance, Coinbase and Kraken.", impBig: "The file is too large (over 8 MB).", impReadErr: "The file could not be read.",
+      impEmpty: "No new records in this file. Everything is already imported.", impRecog: "Detected format: ", impNewRows: "New records: ", impDup: "Already present (skipped): ",
+      impSkip: "Skipped (failed, pending or unknown): ", impBadCur: "Unsupported currencies: ", impPeriod: "Period: ", impInOut: "Income: {a} · Expenses: {b}",
+      impBal: "Balance in file: ", impAssets: "Assets: ", impFiatIgnored: "Fiat money (EUR, USD…) in crypto files is skipped.",
+      impDone: "Imported: ", impList: "Past imports", impDelQ: "Delete?", impRecs: " records",
+      cryTitle: "Crypto", cryRefresh: "Refresh prices", cryEmpty: "No crypto yet. Import a CSV from Binance, Coinbase or Kraken in Settings.", cryTotal: "Crypto value",
+      cryInTotal: "Include crypto in the total", cryNoPrice: "no price", cryPrices: "Prices from CoinGecko, ", cryNoNet: "Prices did not load. Only quantities are shown.",
+      cryNote2: "Quantities come from imported files and may be incomplete if a file does not cover the whole history.",
+      navSavings: "Savings", wSavings: "Savings", savTitle: "Savings", savMove: "Move money",
+      savAutoTitle: "Automatic saving", savAutoNote: "Turn on one or both. Money moves into savings by itself.",
+      savEod: "Leftover of the daily allowance", savEodNote: "What you did not spend of the day's allowance goes to savings.",
+      savNeedAllow: "Set a daily allowance in Settings first.",
+      savCap: "Everything above an amount", savCapNote: "When the wallet holds more than this amount, the excess goes to savings.",
+      savCapAmt: "Wallet maximum", savHist: "Activity", savEmpty: "No savings activity yet.",
+      autoEod: "Automatic: allowance leftover", autoCap: "Automatic: above wallet limit",
+      fcSet: "Forecast", fcShow: "Show the forecast on the home screen", glass: "Card transparency",
+      vaultsTitle: "Vaults", vaultsNote: "You can have several vaults. The password covers all of them.", vaultNamePh: "New vault name", vaultAdd: "Add vault",
+      vaultNotEmpty: "The vault is not empty. Move the money out first.", vaultLimit: "At most 8 vaults.", errVName: "Enter a vault name.",
+      peopleTitle: "People", pGave: "You gave: ", pTook: "You took: ", pQuits: "Even", pOwesYou: "Owes you ", pYouOwe: "You owe ",
+      dHist: "Before: you gave them {a} in total, they gave you {b}",
+      quickTitle: "Quick amounts", quickNote: "Common expenses or income. One tap on the home screen records them in the selected wallet.",
+      quickNamePh: "Name, e.g. Coffee", quickAdd: "Add quick amount", quickEmpty: "No quick amounts yet.", quickLimit: "At most 12 quick amounts.",
+      errQName: "Enter a name.", typeOut: "Expense", typeIn: "Income", added: "Added: ", undo: "Undo", quickPlus: "+ Quick",
+      fcTitle: "Forecast", fcAvg: "You spend about ", fcPerDay: " per day", fcDays: "Your wallet lasts about {n} days", fcDay1: "Your wallet lasts about 1 day",
+      fcUntil: "until ", fcNone: "Your wallet is empty", fcFew: "Needs entries from at least 3 days to make a forecast.",
+      fcYear: "Your wallet lasts more than a year", fcNoSpend: "You have not spent from the wallet in the last days.",
+      debts: "Debts", debtNew: "+ New", debtOwedMe: "Owed to me", debtIOwe: "I owe", debtWho: "Person's name", debtWhoPh: "e.g. John",
+      debtLent: "I lent to…", debtBorrowed: "I borrowed from…", debtAmt: "Amount", debtTrack: "Count in wallet",
+      debtTrackNote: "Money you lend leaves the wallet and money paid back returns to it.", debtNone: "No debts. Add who owes whom and how much.",
+      errDebtWho: "Enter a name.", debtLentTo: "Lent to ", debtBorrowedFrom: "Borrowed from ", debtRetFrom: "Paid back by ", debtRetTo: "Paid back to ",
+      debtPay: "Paid back", debtPayAmt: "How much was paid back", debtConfirm: "Confirm", errPayMore: "That is more than what is left.",
+      debtOf: "paid {a} of {b}", debtDone: "Settled", debtDelQ: "Delete this debt? History entries stay.",
+      debtOwesYou: "Owes you", debtYouOwe: "You owe", create2: "Add",
+      allowTitle: "Daily allowance", allowNote: "Set how much you can spend per day. The wallet then shows only what is left for today. If you go over, you see the normal balance and a warning.",
+      allowLeft: "Left for today", allowOf: "of", allowOff: "Turn off allowance", allowOver: "You went over your daily allowance by ", allowOn: "Allowance: ", allowNone: "Allowance is off.", allowSaved: "Saved.",
+      tripFromMain: "From wallet", tripFromVault: "From vault", available: "Available: ", tripTotal: "Total for the trip: ",
+      errTripSome: "Enter an amount from the wallet, the vault or both.",
+      errTripMain: "Not enough in your wallet.", errTripVault: "Not enough in your vault.",
+      unlockVault: "Unlock vault", unlockTitle: "Unlock the vault", pwLabel: "Password", unlock: "Unlock",
+      wrongPw: "Wrong password.", tooMany: "Too many attempts. Wait {s} s.",
+      lock: "Lock vault", showTotal: "Show amount",
+      vaultPw: "Vault password",
+      vaultPwNote: "When on, the vault balances and the total are hidden and shown only after unlocking. This hides amounts from view, it is not encryption. The password cannot be recovered. Vaults lock by themselves after 5 minutes of inactivity or when you leave the app.",
+      pwOff: "No password set.", pwOn: "The vault is protected by a password.",
+      setPw: "Set password", changePw: "Change password", removePw: "Remove password",
+      pwNew: "New password", pwConfirm: "Repeat password", pwCurrent: "Current password",
+      errPwShort: "The password needs at least 4 characters.", errPwMatch: "The passwords do not match.",
+      save: "Save",
+      goals: "Goals", newGoal: "+ New goal", goalName: "Goal name", goalNamePh: "e.g. Holiday",
+      goalTargetPh: "e.g. 1000", goalTime: "How much time do you have",
+      unitDays: "days", unitWeeks: "weeks", unitMonths: "months",
+      create: "Create goal", cancel: "Cancel",
+      noGoals: "No goals yet. Set an amount and a deadline and the app works out how much to put aside each day.",
+      of: "of", perDay: "Today's amount",
+      dueToday: "Due today", overdue: "Past deadline",
+      saveToday: "Save ", doneToday: "Done for today", reached: "Goal reached",
+      other: "Other amount", put: "Save", take: "Take back",
+      errBal: "Not enough in your wallet.", errGoal: "The goal doesn't hold that much.", errAmt: "Enter an amount above 0.",
+      errName: "Enter a goal name.", errTarget: "Enter an amount above 0.", errTime: "Enter the time as a whole number.",
+      delGoal: "Delete goal", delGoalQ: "Saved money goes back to your wallet.",
+      language: "Language", currency: "Currency",
+      currencyNote: "Amounts are converted at the current rate and rounded to 2 decimals.",
+      refresh: "Refresh rates", ratesOk: "Rates from ", ratesApprox: "Approximate rates. No internet connection.", ratesLoading: "Loading rates…",
+      appearance: "Appearance", bgColor: "Background", accentColor: "Accent",
+      photo: "Background photo", pickPhoto: "Choose photo", removePhoto: "Remove photo", dim: "Dimming",
+      photoErr: "Could not save the photo. Try another one.",
+      version: "Version", updNote: "Updates download automatically when you are online."
+    }
+  };
+
+  var CURS = {
+    BGN: { bg: "лв.", en: "BGN", pre: false },
+    EUR: { bg: "€", en: "€", pre: true },
+    USD: { bg: "$", en: "$", pre: true },
+    GBP: { bg: "£", en: "£", pre: true },
+    UAH: { bg: "₴", en: "₴", pre: true },
+    TRY: { bg: "₺", en: "₺", pre: true },
+    RON: { bg: "lei", en: "RON", pre: false },
+    PLN: { bg: "zł", en: "PLN", pre: false },
+    CHF: { bg: "CHF", en: "CHF", pre: false },
+    CZK: { bg: "Kč", en: "CZK", pre: false },
+    HUF: { bg: "Ft", en: "HUF", pre: false },
+    RSD: { bg: "RSD", en: "RSD", pre: false },
+    MKD: { bg: "MKD", en: "MKD", pre: false },
+    CAD: { bg: "CA$", en: "CA$", pre: true },
+    AUD: { bg: "A$", en: "A$", pre: true },
+    JPY: { bg: "¥", en: "¥", pre: true }
+  };
+  /* Курсове към EUR. Само за случая, когато още не са свалени. BGN е фиксиран. */
+  var FALLBACK = { EUR: 1, BGN: 1.95583, USD: 1.125, GBP: 0.85, UAH: 50.6, TRY: 55.3, RON: 5.34, PLN: 4.38, CHF: 0.933, CZK: 24.44, HUF: 368.5, RSD: 117.4, MKD: 61.45, CAD: 1.604, AUD: 1.618, JPY: 177.6 };
+  var RATE_URLS = [
+    "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/eur.json",
+    "https://latest.currency-api.pages.dev/v1/currencies/eur.json"
+  ];
+  var BG_PRESETS = ["#050506", "#0b1220", "#0c1a14", "#180f26", "#1d140f", "#1a1a1c", "#f2f3f5", "#fbf5e9"];
+  var AC_PRESETS = ["#2f6bd0", "#1f9d6b", "#8a5cf5", "#e8772e", "#d6447e", "#14a3b8", "#d64545", "#c9a227"];
+
+  var S = { cryTot: false, fc: true, glass: 26, eod: false, eodDay: "", capOn: false, cap: 0, capCur: "BGN", allow: 0, allowCur: "BGN", lang: "bg", cur: "BGN", ctx: "main", bg: "#050506", accent: "#2f6bd0", dim: 55, photo: false };
+  var entries = [], goals = [], trips = [], R = null, rateState = "";
+  var page = "home", showForm = false, showTripForm = false, openGoal = null, delGoalId = null, endTripId = null;
+  var goalMsg = {};
+  var K_VL = "moite-pari-vaults-v1", vaultList = [{ id: "vault", name: "" }], sweeping = false;
+  function vaultById(id) { for (var i = 0; i < vaultList.length; i++) if (vaultList[i].id === id) return vaultList[i]; return null; }
+  function isVault(id) { return !!vaultById(id); }
+  function visVaults() { return vaultList.filter(function (v) { return !v.hidden; }); }
+  var K_API = "moite-pari-api-v1", K_APIS = "moite-pari-apisnap-v1";
+  var apiCreds = {}, apiSnap = {}, apiErr = {}, apiTry = {}, apiBusy = false;
+  var K_C = "moite-pari-crypto-v1", K_IB = "moite-pari-imports-v1", K_CP = "moite-pari-cprices-v1";
+  var crypto_ = [], batches = [], CP = null, cpBusy = false, cpTry = 0, impPending = null, delImpId = null;
+  var K_Q = "moite-pari-quick-v1", K_D = "moite-pari-debts-v1";
+  var quick = [], debts = [], showDebtForm = false, debtDir = "lent", payId = null, delDebtId = null, toastTimer = null, toastUndoFn = null;
+
+  /* ---------- парола за сейфа ---------- */
+  var K_V = "moite-pari-vault-v1";
+  var V = null, vaultOpen = false, idleTimer = null, failCount = 0, lockUntil = 0, modalCfg = null;
+  function pwOn() { return !!(V && V.hash); }
+  function canSeeVault() { return !pwOn() || vaultOpen; }
+  function vaultLocked() { return pwOn() && !vaultOpen; }
+  function lockVault() {
+    clearTimeout(idleTimer);
+    if (!vaultOpen) return;
+    vaultOpen = false;
+    if (isVault(S.ctx)) { S.ctx = "main"; save(K_S, S); }
+    closeModal();
+    renderAll();
+  }
+  function touchIdle() {
+    clearTimeout(idleTimer);
+    if (pwOn() && vaultOpen) idleTimer = setTimeout(lockVault, 5 * 60 * 1000);
+  }
+  function cyrb53(str) {
+    var h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+    for (var i = 0; i < str.length; i++) {
+      var ch = str.charCodeAt(i);
+      h1 = Math.imul(h1 ^ ch, 2654435761); h2 = Math.imul(h2 ^ ch, 1597334677);
+    }
+    h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+    h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+    return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(16);
+  }
+  function hashPw(pw, salt) {
+    var str = salt + "|" + pw;
+    try {
+      if (window.crypto && crypto.subtle && window.TextEncoder) {
+        return crypto.subtle.digest("SHA-256", new TextEncoder().encode(str)).then(function (buf) {
+          var a = new Uint8Array(buf), o = "";
+          for (var i = 0; i < a.length; i++) o += (a[i] < 16 ? "0" : "") + a[i].toString(16);
+          return "s:" + o;
+        }, function () { return "c:" + cyrb53(str); });
+      }
+    } catch (e) {}
+    return Promise.resolve("c:" + cyrb53(str));
+  }
+  function randomSalt() { return Math.random().toString(36).slice(2) + Date.now().toString(36) + Math.random().toString(36).slice(2); }
+  function checkPw(pw) {
+    return hashPw(pw, V.salt).then(function (h) { return h === V.hash; });
+  }
+  function lockIcon() {
+    var ns = "http://www.w3.org/2000/svg", svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("viewBox", "0 0 24 24"); svg.setAttribute("width", "14"); svg.setAttribute("height", "14");
+    svg.setAttribute("fill", "none"); svg.setAttribute("stroke", "currentColor"); svg.setAttribute("stroke-width", "2");
+    svg.setAttribute("stroke-linecap", "round"); svg.setAttribute("stroke-linejoin", "round"); svg.setAttribute("aria-hidden", "true");
+    var r = document.createElementNS(ns, "rect");
+    r.setAttribute("x", "5"); r.setAttribute("y", "11"); r.setAttribute("width", "14"); r.setAttribute("height", "9"); r.setAttribute("rx", "2");
+    var pth = document.createElementNS(ns, "path"); pth.setAttribute("d", "M8 11V8a4 4 0 0 1 8 0v3");
+    svg.appendChild(r); svg.appendChild(pth);
+    return svg;
+  }
+
+  /* Прозорец с полета за парола. cfg: title, text, fields[{id,label}], ok, onOk(vals) -> Promise<string|null>, after */
+  function openModal(cfg) {
+    modalCfg = cfg;
+    $("mTitle").textContent = cfg.title;
+    $("mText").textContent = cfg.text || ""; $("mText").hidden = !cfg.text;
+    var box = $("mFields"); box.textContent = "";
+    cfg.fields.forEach(function (f, i) {
+      var wrap = el("div", "fieldrow");
+      var lb = el("label", null, f.label); lb.setAttribute("for", "mf-" + f.id);
+      var inp = document.createElement(f.multiline ? "textarea" : "input");
+      if (!f.multiline) { inp.type = f.text ? "text" : "password"; inp.addEventListener("keydown", function (ev) { if (ev.key === "Enter") submitModal(); }); }
+      inp.id = "mf-" + f.id; inp.autocomplete = "off"; inp.setAttribute("autocapitalize", "off"); inp.setAttribute("spellcheck", "false");
+      wrap.appendChild(lb); wrap.appendChild(inp); box.appendChild(wrap);
+    });
+    showMsg("mMsg", "");
+    $("mCancel").textContent = t("cancel"); $("mOk").textContent = cfg.ok;
+    $("modal").hidden = false;
+    var first = box.querySelector("input"); if (first) setTimeout(function () { first.focus(); }, 30);
+  }
+  function closeModal() { $("modal").hidden = true; modalCfg = null; }
+  function submitModal() {
+    var cfg = modalCfg; if (!cfg) return;
+    var vals = {};
+    cfg.fields.forEach(function (f) { vals[f.id] = $("mf-" + f.id).value; });
+    cfg.onOk(vals).then(function (err) {
+      if (modalCfg !== cfg) return;
+      if (err) { showMsg("mMsg", err); return; }
+      closeModal();
+      if (cfg.after) cfg.after();
+    });
+  }
+  function askUnlock(cb) {
+    if (canSeeVault()) { if (cb) cb(); return; }
+    openModal({
+      title: t("unlockTitle"), fields: [{ id: "pw", label: t("pwLabel") }], ok: t("unlock"),
+      onOk: function (v) {
+        var now = Date.now();
+        if (now < lockUntil) return Promise.resolve(t("tooMany").replace("{s}", Math.ceil((lockUntil - now) / 1000)));
+        return checkPw(v.pw).then(function (okPw) {
+          if (okPw) { failCount = 0; vaultOpen = true; touchIdle(); return null; }
+          failCount++;
+          if (failCount >= 5) { failCount = 0; lockUntil = Date.now() + 30000; return t("tooMany").replace("{s}", 30); }
+          return t("wrongPw");
+        });
+      },
+      after: function () { renderAll(); if (cb) cb(); }
+    });
+  }
+  function savePw(pw) {
+    var salt = randomSalt();
+    return hashPw(pw, salt).then(function (h) {
+      V = { salt: salt, hash: h }; save(K_V, V);
+    });
+  }
+  function setPwFlow() {
+    openModal({
+      title: t("setPw"), fields: [{ id: "n1", label: t("pwNew") }, { id: "n2", label: t("pwConfirm") }], ok: t("save"),
+      onOk: function (v) {
+        if (v.n1.length < 4) return Promise.resolve(t("errPwShort"));
+        if (v.n1 !== v.n2) return Promise.resolve(t("errPwMatch"));
+        return savePw(v.n1).then(function () { vaultOpen = true; touchIdle(); return null; });
+      },
+      after: renderAll
+    });
+  }
+  function changePwFlow() {
+    openModal({
+      title: t("changePw"), fields: [{ id: "c", label: t("pwCurrent") }, { id: "n1", label: t("pwNew") }, { id: "n2", label: t("pwConfirm") }], ok: t("save"),
+      onOk: function (v) {
+        return checkPw(v.c).then(function (okPw) {
+          if (!okPw) return t("wrongPw");
+          if (v.n1.length < 4) return t("errPwShort");
+          if (v.n1 !== v.n2) return t("errPwMatch");
+          return savePw(v.n1).then(function () { vaultOpen = true; touchIdle(); return null; });
+        });
+      },
+      after: renderAll
+    });
+  }
+  function removePwFlow() {
+    openModal({
+      title: t("removePw"), fields: [{ id: "c", label: t("pwCurrent") }], ok: t("removePw"),
+      onOk: function (v) {
+        return checkPw(v.c).then(function (okPw) {
+          if (!okPw) return t("wrongPw");
+          V = null; try { localStorage.removeItem(K_V); } catch (e) {}
+          vaultOpen = false; clearTimeout(idleTimer); return null;
+        });
+      },
+      after: renderAll
+    });
+  }
+
+  function load(k, d) { try { var v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch (e) { return d; } }
+  function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
+  function t(k) { return (T[S.lang] && T[S.lang][k]) || T.bg[k] || k; }
+  function loc() { return S.lang === "en" ? "en-GB" : "bg-BG"; }
+  function round2(x) { return Math.round(x * 100) / 100; }
+  function p2(n) { return (n < 10 ? "0" : "") + n; }
+  function ymd(d) { return d.getFullYear() + "-" + p2(d.getMonth() + 1) + "-" + p2(d.getDate()); }
+  function parseYmd(s) { var a = String(s).split("-"); return new Date(+a[0], +a[1] - 1, +a[2]); }
+  function startOfDay(ts) { var d = new Date(ts); return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(); }
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  /* ---------- цветове ---------- */
+  function h2r(h) { h = String(h).replace("#", ""); if (h.length === 3) h = h.replace(/./g, "$&$&"); return [parseInt(h.substr(0, 2), 16), parseInt(h.substr(2, 2), 16), parseInt(h.substr(4, 2), 16)]; }
+  function r2h(r) { return "#" + r.map(function (v) { v = Math.max(0, Math.min(255, Math.round(v))); return (v < 16 ? "0" : "") + v.toString(16); }).join(""); }
+  function mix(a, b, k) { var x = h2r(a), y = h2r(b); return r2h([0, 1, 2].map(function (i) { return x[i] + (y[i] - x[i]) * k; })); }
+  function lum(h) {
+    var c = h2r(h).map(function (v) { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  }
+  function rgba(h, a) { var c = h2r(h); return "rgba(" + c[0] + "," + c[1] + "," + c[2] + "," + a + ")"; }
+  function hsl2hex(h, s, l) {
+    s /= 100; l /= 100;
+    var k = function (n) { return (n + h / 30) % 12; }, a = s * Math.min(l, 1 - l);
+    var f = function (n) { return l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1))); };
+    return r2h([f(0) * 255, f(8) * 255, f(4) * 255]);
+  }
+  function hex2hsl(hex) {
+    var c = h2r(hex).map(function (v) { return v / 255; }), mx = Math.max(c[0], c[1], c[2]), mn = Math.min(c[0], c[1], c[2]);
+    var l = (mx + mn) / 2, d = mx - mn, h = 0, s = 0;
+    if (d) {
+      s = d / (1 - Math.abs(2 * l - 1));
+      if (mx === c[0]) h = ((c[1] - c[2]) / d) % 6; else if (mx === c[1]) h = (c[2] - c[0]) / d + 2; else h = (c[0] - c[1]) / d + 4;
+      h *= 60; if (h < 0) h += 360;
+    }
+    return [Math.round(h), Math.round(s * 100), Math.round(l * 100)];
+  }
+  function validHex(s) { return typeof s === "string" && /^#[0-9a-fA-F]{6}$/.test(s); }
+
+  function applyTheme() {
+    var bg = S.bg, light = lum(bg) > 0.4, st = document.documentElement.style;
+    var fg = light ? "#16161a" : "#f4f4f5";
+    var card, field, line, nav, track, muted, inC, outC;
+    if (light) {
+      card = mix(bg, "#ffffff", 0.65); field = mix(bg, "#000000", 0.05); line = mix(bg, "#000000", 0.12);
+      nav = card; track = mix(bg, "#000000", 0.1); muted = mix(fg, bg, 0.45); inC = "#15803d"; outC = "#d33f2b";
+    } else {
+      card = mix(bg, "#ffffff", 0.148); field = mix(bg, "#ffffff", 0.168); line = mix(bg, "#ffffff", 0.212);
+      nav = mix(bg, "#ffffff", 0.032); track = mix(bg, "#ffffff", 0.088); muted = mix(fg, bg, 0.33); inC = "#6fd69a"; outC = "#ff9b8f";
+    }
+    var ac = S.accent;
+    var set = function (k, v) { st.setProperty(k, v); };
+    set("--bg", bg); set("--fg", fg); set("--muted", muted);
+    set("--card", card); set("--field", field); set("--line", line); set("--nav", nav); set("--track", track);
+    var ga = 1 - S.glass / 100;
+    set("--card-a", S.photo ? rgba(card, ga) : card);
+    set("--nav-a", S.photo ? rgba(nav, Math.min(1, ga + 0.1)) : nav);
+    set("--accent", ac);
+    set("--accent-fg", lum(ac) > 0.45 ? "#101014" : "#ffffff");
+    set("--accent-text", light ? mix(ac, "#000000", 0.25) : mix(ac, "#ffffff", 0.4));
+    set("--in", inC); set("--out", outC);
+    set("--scrim", rgba(bg, S.dim / 100));
+    st.colorScheme = light ? "light" : "dark";
+    document.documentElement.classList.toggle("has-photo", !!S.photo);
+    var m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute("content", bg);
+    try { parent.postMessage({ t: "theme", top: bg, bottom: nav, light: light }, "*"); } catch (e) {}
+  }
+  function applyPhoto() {
+    var url = null;
+    if (S.photo) { try { url = localStorage.getItem(K_P); } catch (e) {} }
+    if (!url) S.photo = false;
+    $("photoLayer").hidden = !S.photo; $("scrimLayer").hidden = !S.photo;
+    if (S.photo) $("photoLayer").style.backgroundImage = 'url("' + url + '")'; else $("photoLayer").style.backgroundImage = "";
+    $("photoRm").hidden = !S.photo; $("dimBox").hidden = !S.photo; $("glassBox").hidden = !S.photo;
+    $("glass").value = S.glass;
+    $("dim").value = S.dim;
+    applyTheme();
+  }
+
+  /* ---------- курсове ---------- */
+  function rate(c) {
+    if (c === "BGN") return 1.95583;
+    return (R && R.rates && R.rates[c]) || FALLBACK[c] || 1;
+  }
+  function conv(a, from, to) { if (!from || !to || from === to) return a; return a / rate(from) * rate(to); }
+  function fetchRates(force) {
+    if (!force && R && Date.now() - R.ts < 6 * 3600 * 1000) return Promise.resolve();
+    rateState = "loading"; renderSettings();
+    function tryUrl(i) {
+      if (i >= RATE_URLS.length) return Promise.reject();
+      return fetch(RATE_URLS[i], { cache: "no-store" })
+        .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+        .then(function (j) {
+          if (!j || !j.eur) throw 0;
+          var rates = { EUR: 1 };
+          Object.keys(CURS).forEach(function (c) { var v = j.eur[c.toLowerCase()]; if (typeof v === "number" && v > 0) rates[c] = v; });
+          rates.BGN = 1.95583;
+          R = { ts: Date.now(), date: j.date || "", rates: rates };
+          save(K_R, R);
+        })
+        .catch(function () { return tryUrl(i + 1); });
+    }
+    return tryUrl(0).then(function () { rateState = "ok"; renderAll(); }, function () { rateState = "fail"; renderSettings(); });
+  }
+
+  function money(n, cur) {
+    cur = cur || S.cur;
+    var r = round2(n), sign = r < 0 ? "−" : "";
+    var num = Math.abs(r).toLocaleString(loc(), { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    var c = CURS[cur] || { bg: cur, en: cur, pre: false };
+    var sym = S.lang === "en" ? c.en : c.bg;
+    if (S.lang === "en") return sign + (c.pre ? sym + num : sym + " " + num);
+    return sign + num + " " + sym;
+  }
+  function parseAmount(s) {
+    var n = parseFloat(String(s).replace(/\s/g, "").replace(",", "."));
+    if (!isFinite(n) || n <= 0) return null;
+    return round2(n);
+  }
+  function daysText(n) {
+    if (S.lang === "en") return n === 1 ? "1 day left" : n + " days left";
+    return n === 1 ? "1 ден остава" : n + " дни остават";
+  }
+
+  /* ---------- сметки ---------- */
+  function tripById(id) { for (var i = 0; i < trips.length; i++) if (trips[i].id === id) return trips[i]; return null; }
+  function activeTrips() { return trips.filter(function (x) { return !x.ended; }); }
+  function wname(id) {
+    if (id === "main") return t("wMain");
+    if (id === "savings") return t("wSavings");
+    var vv = vaultById(id); if (vv) return vv.name || t("wVault");
+    var tr = tripById(id); return tr ? tr.name : "?";
+  }
+  function wcur(id) { var tr = tripById(id); return tr ? tr.cur : S.cur; }
+  function validCtx() {
+    var c = S.ctx;
+    if (c === "main") return c;
+    var vc = vaultById(c);
+    if (vc) return (!vc.hidden && canSeeVault()) ? c : "main";
+    var tr = tripById(c);
+    return tr && !tr.ended ? c : "main";
+  }
+  function effect(e, w) {
+    var ty = e.type;
+    if (ty === "xfer") return (e.dst === w ? e.amount : 0) - (e.src === w ? e.amount : 0);
+    var ew = (ty === "in" || ty === "out") ? (e.w || "main") : "main";
+    if (ew !== w) return 0;
+    return (ty === "in" || ty === "from") ? e.amount : -e.amount;
+  }
+  function bal(w, cur) {
+    var s = 0;
+    entries.forEach(function (e) { var v = effect(e, w); if (v) s += conv(v, e.cur || S.cur, cur); });
+    return s;
+  }
+  function touches(e, w) {
+    if (e.type === "xfer") return e.src === w || e.dst === w;
+    if (e.type === "to" || e.type === "from") return w === "main";
+    return (e.w || "main") === w;
+  }
+  function hiddenEntry(e) {
+    if (e.type !== "in" && e.type !== "out") return false;
+    if (isVault(e.w) && vaultLocked()) return true;
+    var tr = tripById(e.w || "main");
+    return !!(tr && !tr.ended);
+  }
+  function goalSaved(g, cur) {
+    var s = 0;
+    entries.forEach(function (e) {
+      if (e.goalId !== g.id) return;
+      var v = e.type === "to" ? e.amount : (e.type === "from" ? -e.amount : 0);
+      if (v) s += conv(v, e.cur || S.cur, cur);
+    });
+    return s;
+  }
+  function totalAll() {
+    var s = bal("main", S.cur) + bal("savings", S.cur);
+    vaultList.forEach(function (v) { s += bal(v.id, S.cur); });
+    if (S.cryTot) s += cryptoValue().total;
+    activeTrips().forEach(function (tr) { s += bal(tr.id, S.cur); });
+    goals.forEach(function (g) { s += goalSaved(g, S.cur); });
+    return s;
+  }
+  function allowNow() { return round2(conv(S.allow, S.allowCur || S.cur, S.cur)); }
+  function spentToday() {
+    var t0 = startOfDay(Date.now()), s = 0;
+    entries.forEach(function (e) {
+      if (e.type === "out" && !e.nt && (e.w || "main") === "main" && e.ts >= t0) s += conv(e.amount, e.cur || S.cur, S.cur);
+    });
+    return round2(s);
+  }
+  function sortedEntries() { return entries.slice().sort(function (a, b) { return b.ts - a.ts; }); }
+  function addEntry(o) { o.id = uid(); o.ts = Date.now(); entries.push(o); save(K_E, entries); return o.id; }
+  function xferCur(src, dst) {
+    var a = tripById(dst); if (a) return a.cur;
+    var b = tripById(src); if (b) return b.cur;
+    return S.cur;
+  }
+
+  function goalInfo(g) {
+    var t0 = startOfDay(Date.now()), saved = 0, savedToday = 0;
+    entries.forEach(function (e) {
+      if (e.goalId !== g.id) return;
+      var v = e.type === "to" ? e.amount : (e.type === "from" ? -e.amount : 0);
+      if (!v) return;
+      v = conv(v, e.cur || S.cur, S.cur);
+      saved += v;
+      if (e.ts >= t0) savedToday += v;
+    });
+    saved = round2(saved); savedToday = round2(savedToday);
+    var target = round2(conv(g.target, g.cur || S.cur, S.cur));
+    var remaining = Math.max(round2(target - saved), 0);
+    var daysLeft = Math.round((parseYmd(g.deadline).getTime() - t0) / 86400000);
+    var d = Math.max(daysLeft, 1);
+    var share = Math.ceil(Math.round((remaining + savedToday) * 100) / d) / 100;
+    var todayLeft = Math.min(Math.max(round2(share - savedToday), 0), remaining);
+    return {
+      saved: saved, target: target, remaining: remaining, daysLeft: daysLeft, share: share, todayLeft: todayLeft,
+      reached: remaining <= 0, pct: target > 0 ? Math.min(100, saved / target * 100) : 0
+    };
+  }
+
+  /* ---------- рендер ---------- */
+  function dayLabel(ts) {
+    var d0 = startOfDay(ts), n0 = startOfDay(Date.now());
+    if (d0 === n0) return t("today");
+    if (d0 === startOfDay(n0 - 43200000)) return t("yesterday");
+    return new Date(ts).toLocaleDateString(loc(), { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  }
+  function fullDate(ts) { return new Date(ts).toLocaleString(loc(), { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }); }
+  function timeOnly(ts) { return new Date(ts).toLocaleTimeString(loc(), { hour: "2-digit", minute: "2-digit" }); }
+
+  function entryTitle(e) {
+    if (e.type === "xfer") return wname(e.src) + " → " + wname(e.dst);
+    if (e.type === "to") return t("toGoal") + (e.goalName || "");
+    if (e.type === "from") return t("fromGoal") + (e.goalName || "");
+    return e.note || (e.type === "in" ? t("defIn") : t("defOut"));
+  }
+  function entryTag(e, ctx) {
+    if (e.type !== "in" && e.type !== "out") return "";
+    var w = e.w || "main";
+    if (w === "main" || w === ctx) return "";
+    if (isVault(w)) return wname(w);
+    return t("tripWord") + ": " + wname(w);
+  }
+  function rowEl(e, mode, dcur, ctx) {
+    var li = el("li");
+    var meta = el("div", "meta");
+    meta.appendChild(el("div", "t", entryTitle(e)));
+    var parts = [], tag = entryTag(e, ctx);
+    if (tag) parts.push(tag);
+    if (e.auto) parts.push(t(e.auto === "eod" ? "autoEod" : "autoCap"));
+    parts.push(mode === "time" ? timeOnly(e.ts) : fullDate(e.ts));
+    var ec = e.cur || S.cur;
+    var masked = vaultLocked() && e.type === "xfer" && (isVault(e.src) || isVault(e.dst));
+    if (ec !== dcur && !masked) parts.push(money(e.amount, ec));
+    meta.appendChild(el("div", "d", parts.join(" · ")));
+    var v = conv(e.amount, ec, dcur), txt, cls;
+    if (e.type === "xfer") {
+      cls = "goal";
+      txt = masked ? "••••" : (ctx ? (e.dst === ctx ? "+" : "−") + money(v, dcur) : money(v, dcur));
+    } else {
+      var pos = (e.type === "in" || e.type === "from");
+      cls = e.type === "in" ? "in" : (e.type === "out" ? "out" : "goal");
+      txt = (pos ? "+" : "−") + money(v, dcur);
+    }
+    li.appendChild(meta); li.appendChild(el("div", "amt " + cls, txt));
+    if (mode === "time") {
+      var x = el("button", "del", "×");
+      x.type = "button"; x.setAttribute("aria-label", t("delRow")); x.setAttribute("data-del", e.id);
+      li.appendChild(x);
+    }
+    return li;
+  }
+
+  function renderStatic() {
+    document.documentElement.lang = S.lang;
+    var i, n = document.querySelectorAll("[data-i18n]");
+    for (i = 0; i < n.length; i++) n[i].textContent = t(n[i].getAttribute("data-i18n"));
+    n = document.querySelectorAll("[data-i18n-ph]");
+    for (i = 0; i < n.length; i++) n[i].setAttribute("placeholder", t(n[i].getAttribute("data-i18n-ph")));
+    $("verText").textContent = t("version") + " " + VERSION;
+    $("langBg").setAttribute("aria-pressed", S.lang === "bg" ? "true" : "false");
+    $("langEn").setAttribute("aria-pressed", S.lang === "en" ? "true" : "false");
+  }
+
+  function renderHome() {
+    var ctx = validCtx(); S.ctx = ctx;
+    var chips = $("chips"); chips.textContent = "";
+    var ids = ["main"].concat(visVaults().map(function (x) { return x.id; })).concat(activeTrips().map(function (x) { return x.id; }));
+    ids.forEach(function (id) {
+      var b = el("button", "chip", wname(id)); b.type = "button";
+      if (isVault(id) && vaultLocked()) { b.appendChild(document.createTextNode(" ")); b.appendChild(lockIcon()); }
+      b.setAttribute("data-ctx", id); b.setAttribute("aria-pressed", id === ctx ? "true" : "false");
+      chips.appendChild(b);
+    });
+    var cur = wcur(ctx), b = bal(ctx, cur), bv = $("balance");
+    $("balLabel").textContent = ctx === "main" ? t("balance") : wname(ctx);
+    bv.textContent = money(b, cur); bv.classList.toggle("neg", round2(b) < 0);
+    var sub = $("balSub");
+    if (cur !== S.cur) { sub.hidden = false; sub.textContent = "≈ " + money(conv(b, cur, S.cur), S.cur); } else sub.hidden = true;
+    sub.classList.remove("over");
+    if (S.allow > 0 && ctx === "main") {
+      var left = round2(allowNow() - spentToday());
+      if (left >= 0) {
+        $("balLabel").textContent = t("allowLeft") + " (" + t("allowOf") + " " + money(allowNow(), S.cur) + ")";
+        bv.textContent = money(left, S.cur); bv.classList.remove("neg");
+        sub.hidden = false; sub.textContent = t("balance") + ": " + money(b, cur);
+      } else {
+        sub.hidden = false; sub.classList.add("over");
+        sub.textContent = "⚠ " + t("allowOver") + money(-left, S.cur);
+      }
+    }
+    $("balTotal").textContent = "";
+    $("balTotal").appendChild(document.createTextNode(t("totalAll") + ": "));
+    $("balTotal").appendChild(el("b", null, money(totalAll(), S.cur)));
+    $("balTotal").hidden = pwOn() && !isVault(ctx);
+    $("lockNow").hidden = !(pwOn() && isVault(ctx));
+    $("amtLbl").textContent = t("amount") + " (" + (S.lang === "en" ? (CURS[cur] ? CURS[cur].en : cur) : (CURS[cur] ? CURS[cur].bg : cur)) + ")";
+
+    var list = $("homeList"); list.textContent = "";
+    var mine = sortedEntries().filter(function (e) { return touches(e, ctx) && (ctx !== "main" && !isVault(ctx) ? true : !hiddenEntry(e)); });
+    mine.slice(0, 5).forEach(function (e) { list.appendChild(rowEl(e, "full", cur, ctx)); });
+    $("homeEmpty").hidden = mine.length > 0;
+    $("viewAll").hidden = mine.length <= 5;
+  }
+
+  function fillWalletSelect(sel, def) {
+    var keep = sel.value || def;
+    sel.textContent = "";
+    ["main"].concat(visVaults().map(function (x) { return x.id; })).concat(["savings"]).concat(activeTrips().map(function (x) { return x.id; })).forEach(function (id) {
+      var o = document.createElement("option"); o.value = id; o.textContent = wname(id); sel.appendChild(o);
+    });
+    sel.value = keep;
+    if (sel.value !== keep) sel.value = def;
+  }
+  function renderXferLabel() {
+    var c = xferCur($("xFrom").value, $("xTo").value), cc = CURS[c];
+    $("xAmtLbl").textContent = t("amount") + " (" + (cc ? (S.lang === "en" ? cc.en : cc.bg) : c) + ")";
+  }
+  function renderWallets() {
+    var masked = vaultLocked();
+    $("totalVal").textContent = masked ? "••••" : money(totalAll(), S.cur);
+    $("revealBtn").hidden = !masked;
+    var br = $("breakdown"); br.textContent = "";
+    var rowB = function (name, val) {
+      var li = el("li"); li.appendChild(el("span", null, name)); li.appendChild(el("span", null, val)); br.appendChild(li);
+    };
+    rowB(t("wMain"), money(bal("main", S.cur), S.cur));
+    visVaults().forEach(function (v) { rowB(wname(v.id), masked ? "••••" : money(bal(v.id, S.cur), S.cur)); });
+    rowB(t("wSavings"), money(bal("savings", S.cur), S.cur));
+    var gs = 0; goals.forEach(function (g) { gs += goalSaved(g, S.cur); });
+    rowB(t("inGoals"), money(gs, S.cur));
+    activeTrips().forEach(function (tr) { rowB(t("tripWord") + ": " + tr.name, money(bal(tr.id, S.cur), S.cur)); });
+
+    fillWalletSelect($("xFrom"), "main"); fillWalletSelect($("xTo"), "vault");
+    renderXferLabel();
+
+    $("tripForm").hidden = !showTripForm; $("newTripBtn").hidden = showTripForm;
+    if (showTripForm) renderTripForm();
+    var act = activeTrips();
+    $("tripEmpty").hidden = act.length > 0 || showTripForm;
+    var list = $("tripList"); list.textContent = "";
+    act.forEach(function (tr) {
+      var box = el("div", "trip"); box.setAttribute("data-tid", tr.id);
+      box.appendChild(el("h3", null, tr.name));
+      var b = bal(tr.id, tr.cur);
+      box.appendChild(el("div", "tv", money(b, tr.cur) + " " + t("budgetLeft")));
+      if (tr.cur !== S.cur) box.appendChild(el("div", "ts", "≈ " + money(conv(b, tr.cur, S.cur), S.cur)));
+      var acts = el("div", "formactions");
+      var ob = el("button", "sbtn", t("openTrip")); ob.type = "button"; ob.setAttribute("data-tact", "open"); ob.setAttribute("data-id", tr.id);
+      acts.appendChild(ob);
+      if (endTripId === tr.id) {
+        var cf = el("div", "confirm");
+        cf.appendChild(el("span", null, t("endTripQ")));
+        var y = el("button", "yes", t("endTrip")); y.type = "button"; y.setAttribute("data-tact", "endyes"); y.setAttribute("data-id", tr.id);
+        var no = el("button", null, t("no")); no.type = "button"; no.setAttribute("data-tact", "endno"); no.setAttribute("data-id", tr.id);
+        cf.appendChild(y); cf.appendChild(no);
+        box.appendChild(acts); box.appendChild(cf);
+      } else {
+        var eb = el("button", "sbtn primary", t("endTrip")); eb.type = "button"; eb.setAttribute("data-tact", "end"); eb.setAttribute("data-id", tr.id);
+        acts.appendChild(eb); box.appendChild(acts);
+      }
+      list.appendChild(box);
+    });
+  }
+
+  function renderHistory() {
+    var box = $("histList"); box.textContent = "";
+    var all = sortedEntries().filter(function (e) { return !hiddenEntry(e); }), curKey = null, ul = null;
+    var s = all.slice(0, 500);
+    s.forEach(function (e) {
+      var k = startOfDay(e.ts);
+      if (k !== curKey) {
+        curKey = k;
+        var day = el("div", "day");
+        day.appendChild(el("h3", null, dayLabel(e.ts)));
+        ul = el("ul"); day.appendChild(ul); box.appendChild(day);
+      }
+      ul.appendChild(rowEl(e, "time", S.cur, null));
+    });
+    if (all.length > 500) box.appendChild(el("p", "note", t("histCap")));
+    $("histEmpty").hidden = s.length > 0;
+    if (!s.length) { $("clearBtn").hidden = true; $("confirmBox").hidden = true; }
+    else if ($("confirmBox").hidden) { $("clearBtn").hidden = false; }
+  }
+
+  function renderGoals() {
+    $("goalForm").hidden = !showForm;
+    $("newGoalBtn").hidden = showForm;
+    $("gTargetLbl").textContent = (S.lang === "en" ? "How much do you want to save" : "Колко искаш да събереш") + " (" + (S.lang === "en" ? CURS[S.cur].en : CURS[S.cur].bg) + ")";
+    $("goalsEmpty").hidden = goals.length > 0 || showForm;
+    var list = $("goalList"); list.textContent = "";
+    goals.forEach(function (g) {
+      var inf = goalInfo(g);
+      var card = el("section", "card goal");
+      var head = el("div", "head");
+      head.appendChild(el("h3", null, g.name));
+      var sub = inf.reached ? "" : (inf.daysLeft > 0 ? daysText(inf.daysLeft) : (inf.daysLeft === 0 ? t("dueToday") : t("overdue")));
+      head.appendChild(el("span", "g-sub", sub));
+      card.appendChild(head);
+
+      var am = el("div", "g-amounts");
+      am.appendChild(el("strong", null, money(inf.saved)));
+      am.appendChild(el("span", null, " " + t("of") + " " + money(inf.target)));
+      card.appendChild(am);
+
+      var bar = el("div", "bar" + (inf.reached ? " done" : ""));
+      var fill = el("div"); fill.style.width = inf.pct.toFixed(1) + "%";
+      bar.appendChild(fill); card.appendChild(bar);
+
+      if (inf.reached) {
+        card.appendChild(el("div", "g-done", t("reached")));
+      } else if (inf.todayLeft > 0) {
+        var pd = el("div", "g-perday");
+        pd.appendChild(el("span", null, t("perDay")));
+        pd.appendChild(el("b", null, money(inf.share)));
+        card.appendChild(pd);
+        var sb = el("button", "sbtn primary full", t("saveToday") + money(inf.todayLeft));
+        sb.type = "button"; sb.setAttribute("data-act", "today"); sb.setAttribute("data-id", g.id);
+        card.appendChild(sb);
+      } else {
+        card.appendChild(el("div", "g-done", t("doneToday")));
+      }
+
+      var msg = el("p", "msg", goalMsg[g.id] || "");
+      msg.hidden = !goalMsg[g.id];
+      card.appendChild(msg);
+
+      if (openGoal === g.id) {
+        var other = el("div", "other");
+        var inp = el("input"); inp.type = "text"; inp.id = "oa-" + g.id;
+        inp.setAttribute("inputmode", "decimal"); inp.setAttribute("autocomplete", "off"); inp.setAttribute("placeholder", t("amountPh"));
+        other.appendChild(inp);
+        var fa = el("div", "formactions");
+        var tk = el("button", "sbtn", t("take")); tk.type = "button"; tk.setAttribute("data-act", "take"); tk.setAttribute("data-id", g.id);
+        var pt = el("button", "sbtn primary", t("put")); pt.type = "button"; pt.setAttribute("data-act", "put"); pt.setAttribute("data-id", g.id);
+        fa.appendChild(tk); fa.appendChild(pt); other.appendChild(fa); card.appendChild(other);
+      }
+
+      var foot = el("div", "g-foot");
+      var ob = el("button", "link accent", t("other")); ob.type = "button"; ob.setAttribute("data-act", "toggle"); ob.setAttribute("data-id", g.id);
+      foot.appendChild(ob);
+      if (delGoalId === g.id) {
+        var cf = el("div", "confirm");
+        cf.appendChild(el("span", null, t("delGoalQ")));
+        var y = el("button", "yes", t("del")); y.type = "button"; y.setAttribute("data-act", "delyes"); y.setAttribute("data-id", g.id);
+        var no = el("button", null, t("no")); no.type = "button"; no.setAttribute("data-act", "delno"); no.setAttribute("data-id", g.id);
+        cf.appendChild(y); cf.appendChild(no); foot.appendChild(cf);
+      } else {
+        var db = el("button", "link danger", t("delGoal")); db.type = "button"; db.setAttribute("data-act", "del"); db.setAttribute("data-id", g.id);
+        foot.appendChild(db);
+      }
+      card.appendChild(foot);
+      list.appendChild(card);
+    });
+  }
+
+
+  /* ---------- известие с „Отмени“ ---------- */
+  function showToast(text, undoFn) {
+    $("toastText").textContent = text; $("toastUndo").textContent = t("undo");
+    $("toastUndo").hidden = !undoFn; toastUndoFn = undoFn || null;
+    $("toast").hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(hideToast, 4500);
+  }
+  function hideToast() { clearTimeout(toastTimer); $("toast").hidden = true; toastUndoFn = null; }
+
+  /* ---------- бързи суми ---------- */
+  function renderQuick() {
+    var box = $("quick"); box.textContent = "";
+    var ctx = validCtx(), cur = wcur(ctx);
+    quick.forEach(function (q) {
+      var v = round2(conv(q.amt, q.cur || S.cur, cur));
+      var b = el("button", "chip q-" + q.type, q.name + " · " + (q.type === "in" ? "+" : "−") + money(v, cur));
+      b.type = "button"; b.setAttribute("data-q", q.id); box.appendChild(b);
+    });
+    var plus = el("button", "chip q-add", t("quickPlus")); plus.type = "button"; plus.setAttribute("data-qadd", "1"); box.appendChild(plus);
+  }
+  function useQuick(id) {
+    var q = null; quick.forEach(function (x) { if (x.id === id) q = x; });
+    if (!q) return;
+    var ctx = validCtx(), cur = wcur(ctx), v = round2(conv(q.amt, q.cur || S.cur, cur));
+    if (v <= 0) return;
+    var eid = addEntry({ type: q.type, amount: v, cur: cur, w: ctx, note: q.name });
+    renderAll(); showBalance();
+    showToast(t("added") + q.name + " " + (q.type === "in" ? "+" : "−") + money(v, cur), function () {
+      entries = entries.filter(function (e) { return e.id !== eid; }); save(K_E, entries); renderAll();
+    });
+  }
+  function renderQuickSettings() {
+    var box = $("qList"); box.textContent = "";
+    if (!quick.length) { box.appendChild(el("p", "note", t("quickEmpty"))); box.lastChild.style.marginBottom = "6px"; }
+    quick.forEach(function (q) {
+      var r = el("div", "qrow");
+      var m = el("div", "meta"); m.appendChild(el("div", "t", q.name));
+      m.appendChild(el("div", "d", (q.type === "in" ? t("typeIn") : t("typeOut")) + " · " + money(q.amt, q.cur || S.cur)));
+      var x = el("button", "del", "×"); x.type = "button"; x.setAttribute("data-qdel", q.id); x.setAttribute("aria-label", t("del"));
+      r.appendChild(m); r.appendChild(x); box.appendChild(r);
+    });
+  }
+  function addQuick() {
+    var name = $("qName").value.trim(), amt = parseAmount($("qAmt").value);
+    ["qName", "qAmt"].forEach(function (id) { $(id).classList.remove("bad"); });
+    if (!name) { $("qName").classList.add("bad"); showMsg("qMsg", t("errQName")); $("qName").focus(); return; }
+    if (amt === null) { $("qAmt").classList.add("bad"); showMsg("qMsg", t("errAmt")); $("qAmt").focus(); return; }
+    if (quick.length >= 12) { showMsg("qMsg", t("quickLimit")); return; }
+    quick.push({ id: uid(), name: name, amt: amt, cur: S.cur, type: $("qType").value === "in" ? "in" : "out" });
+    save(K_Q, quick); $("qName").value = ""; $("qAmt").value = ""; showMsg("qMsg", "");
+    renderAll();
+  }
+
+  /* ---------- прогноза ---------- */
+  function renderForecast() {
+    var card = $("fcCard"), ctx = validCtx();
+    if (ctx !== "main" || !S.fc) { card.hidden = true; return; }
+    card.hidden = false;
+    var main = $("fcMain"), sub = $("fcSub");
+    main.className = "fc-m"; sub.textContent = "";
+    var t0 = startOfDay(Date.now()), first = Infinity, sum = 0, from = t0 - 13 * 86400000;
+    entries.forEach(function (e) {
+      if ((e.type !== "in" && e.type !== "out") || (e.w || "main") !== "main" || e.ts < from) return;
+      if (e.ts < first) first = e.ts;
+      if (e.type === "out" && !e.nt) sum += conv(e.amount, e.cur || S.cur, S.cur);
+    });
+    var days = first === Infinity ? 0 : Math.min(14, Math.round((t0 - startOfDay(first)) / 86400000) + 1);
+    var b = round2(bal("main", S.cur));
+    if (first === Infinity) { card.hidden = true; return; }
+    if (b <= 0) { main.textContent = t("fcNone"); main.classList.add("bad"); return; }
+    if (days < 3) { main.textContent = t("fcFew"); main.style.fontSize = "15px"; main.style.fontWeight = "500"; return; }
+    main.style.fontSize = ""; main.style.fontWeight = "";
+    if (sum <= 0) { main.textContent = t("fcNoSpend"); return; }
+    var avg = sum / days, n = Math.floor(b / avg);
+    sub.textContent = t("fcAvg") + money(round2(avg), S.cur) + t("fcPerDay");
+    if (n > 365) { main.textContent = t("fcYear"); return; }
+    main.textContent = n === 1 ? t("fcDay1") : t("fcDays").replace("{n}", n);
+    if (n < 7) main.classList.add("bad"); else if (n < 14) main.classList.add("warn");
+    var d = new Date(); d.setDate(d.getDate() + n);
+    sub.textContent += " · " + t("fcUntil") + d.toLocaleDateString(loc(), { day: "numeric", month: "long" });
+  }
+
+  /* ---------- дългове ---------- */
+  function debtLeft(d) {
+    var p = 0; (d.pays || []).forEach(function (x) { p += x.amt; });
+    return round2(d.amount - p);
+  }
+  function renderDebts() {
+    var open = debts.filter(function (d) { return !d.closed; }), done = debts.filter(function (d) { return d.closed; });
+    var me = 0, mine = 0;
+    open.forEach(function (d) { var v = conv(debtLeft(d), d.cur, S.cur); if (d.dir === "lent") me += v; else mine += v; });
+    $("dSum").hidden = !open.length;
+    $("dSumMe").textContent = money(round2(me), S.cur); $("dSumI").textContent = money(round2(mine), S.cur);
+    $("debtForm").hidden = !showDebtForm; $("newDebtBtn").hidden = showDebtForm;
+    $("dLent").setAttribute("aria-pressed", debtDir === "lent" ? "true" : "false");
+    $("dBorrowed").setAttribute("aria-pressed", debtDir === "borrowed" ? "true" : "false");
+    var dc = $("dCur");
+    if (!dc.options.length) Object.keys(CURS).forEach(function (code) { var o = document.createElement("option"); o.value = code; o.textContent = code; dc.appendChild(o); });
+    $("debtEmpty").hidden = debts.length > 0 || showDebtForm;
+    renderPeople(); renderDebtHint();
+
+    var list = $("debtList"); list.textContent = "";
+    open.slice().sort(function (a, b) { return b.ts - a.ts; }).forEach(function (d) {
+      var box = el("div", "debt"); box.setAttribute("data-did", d.id);
+      var left = debtLeft(d), h = el("div", "dh");
+      h.appendChild(el("h3", null, d.who));
+      h.appendChild(el("div", "dv " + (d.dir === "lent" ? "pos" : "neg"), money(left, d.cur)));
+      box.appendChild(h);
+      var line = (d.dir === "lent" ? t("debtOwesYou") : t("debtYouOwe")) + " · " + fullDate(d.ts) + (d.note ? " · " + d.note : "");
+      box.appendChild(el("div", "ds", line));
+      if (left < d.amount) {
+        box.appendChild(el("div", "ds", t("debtOf").replace("{a}", money(round2(d.amount - left), d.cur)).replace("{b}", money(d.amount, d.cur))));
+        var bar = el("div", "bar"), fill = el("div"); fill.style.width = Math.min(100, (d.amount - left) / d.amount * 100) + "%";
+        bar.appendChild(fill); box.appendChild(bar);
+      }
+      if (d.cur !== S.cur) box.appendChild(el("div", "ds", "≈ " + money(conv(left, d.cur, S.cur), S.cur)));
+      if (payId === d.id) {
+        var inp = document.createElement("input"); inp.type = "text"; inp.setAttribute("inputmode", "decimal"); inp.autocomplete = "off";
+        inp.id = "payAmt"; inp.value = String(left).replace(".", S.lang === "bg" ? "," : "."); inp.setAttribute("aria-label", t("debtPayAmt"));
+        box.appendChild(inp);
+        box.appendChild(el("p", "msg")); box.lastChild.id = "payMsg"; box.lastChild.hidden = true;
+        var fa = el("div", "formactions");
+        var c1 = el("button", "sbtn", t("cancel")); c1.type = "button"; c1.setAttribute("data-dact", "paycancel");
+        var c2 = el("button", "sbtn primary", t("debtConfirm")); c2.type = "button"; c2.setAttribute("data-dact", "payok"); c2.setAttribute("data-id", d.id);
+        fa.appendChild(c1); fa.appendChild(c2); box.appendChild(fa);
+      } else if (delDebtId === d.id) {
+        var cf = el("div", "confirm"); cf.appendChild(el("span", null, t("debtDelQ")));
+        var y = el("button", "yes", t("del")); y.type = "button"; y.setAttribute("data-dact", "delyes"); y.setAttribute("data-id", d.id);
+        var n = el("button", null, t("no")); n.type = "button"; n.setAttribute("data-dact", "delno");
+        cf.appendChild(y); cf.appendChild(n); box.appendChild(cf);
+      } else {
+        var fa2 = el("div", "formactions");
+        var pb = el("button", "sbtn primary", t("debtPay")); pb.type = "button"; pb.setAttribute("data-dact", "pay"); pb.setAttribute("data-id", d.id);
+        var db = el("button", "sbtn", t("del")); db.type = "button"; db.setAttribute("data-dact", "del"); db.setAttribute("data-id", d.id);
+        fa2.appendChild(pb); fa2.appendChild(db); box.appendChild(fa2);
+      }
+      list.appendChild(box);
+    });
+    var dn = $("debtDone"); dn.textContent = "";
+    if (done.length) {
+      var hd = el("h3", null, t("debtDone")); hd.style.cssText = "font-size:14px;color:var(--muted);font-weight:500;margin:18px 0 6px";
+      dn.appendChild(hd);
+      done.slice().sort(function (a, b) { return b.closed - a.closed; }).forEach(function (d) {
+        var box = el("div", "debt done"); box.setAttribute("data-did", d.id);
+        var h = el("div", "dh"); h.appendChild(el("h3", null, "✓ " + d.who)); h.appendChild(el("div", "ds", money(d.amount, d.cur)));
+        box.appendChild(h);
+        var x = el("button", "link danger", t("del")); x.type = "button"; x.setAttribute("data-dact", "delyes"); x.setAttribute("data-id", d.id); x.style.alignSelf = "flex-start";
+        box.appendChild(x); dn.appendChild(box);
+      });
+    }
+  }
+  function resetDebtForm() {
+    $("dWho").value = ""; $("dAmt").value = ""; $("dNote").value = ""; $("dCur").value = S.cur; $("dTrack").checked = true; debtDir = "lent";
+    ["dWho", "dAmt"].forEach(function (id) { $(id).classList.remove("bad"); }); showMsg("dMsg", "");
+  }
+  function createDebt() {
+    var who = $("dWho").value.trim(), amt = parseAmount($("dAmt").value), cur = $("dCur").value, track = $("dTrack").checked;
+    ["dWho", "dAmt"].forEach(function (id) { $(id).classList.remove("bad"); });
+    if (!who) { $("dWho").classList.add("bad"); showMsg("dMsg", t("errDebtWho")); $("dWho").focus(); return; }
+    if (amt === null) { $("dAmt").classList.add("bad"); showMsg("dMsg", t("errAmt")); $("dAmt").focus(); return; }
+    if (track && debtDir === "lent" && round2(bal("main", cur)) < amt) { $("dAmt").classList.add("bad"); showMsg("dMsg", t("errBal")); return; }
+    var d = { id: uid(), who: who, dir: debtDir, amount: amt, cur: cur, note: $("dNote").value.trim(), ts: Date.now(), track: track, pays: [], closed: null };
+    debts.push(d); save(K_D, debts);
+    if (track) addEntry({ type: debtDir === "lent" ? "out" : "in", amount: amt, cur: cur, w: "main", nt: true, note: (debtDir === "lent" ? t("debtLentTo") : t("debtBorrowedFrom")) + who });
+    showDebtForm = false; resetDebtForm(); renderAll();
+  }
+  function onDebtClick(ev) {
+    var b = ev.target.closest("[data-dact]"); if (!b) return;
+    var act = b.getAttribute("data-dact"), id = b.getAttribute("data-id"), d = null;
+    debts.forEach(function (x) { if (x.id === id) d = x; });
+    if (act === "pay") { payId = id; delDebtId = null; }
+    else if (act === "paycancel") payId = null;
+    else if (act === "del") { delDebtId = id; payId = null; }
+    else if (act === "delno") delDebtId = null;
+    else if (act === "delyes" && d) { debts = debts.filter(function (x) { return x.id !== id; }); save(K_D, debts); delDebtId = null; }
+    else if (act === "payok" && d) {
+      var v = parseAmount($("payAmt").value), left = debtLeft(d);
+      if (v === null) { showMsg("payMsg", t("errAmt")); return; }
+      if (v > left + 0.004) { showMsg("payMsg", t("errPayMore")); return; }
+      if (d.track && d.dir === "borrowed" && round2(bal("main", d.cur)) < v) { showMsg("payMsg", t("errBal")); return; }
+      v = Math.min(v, left);
+      d.pays = d.pays || []; d.pays.push({ amt: v, ts: Date.now() });
+      if (debtLeft(d) <= 0.004) d.closed = Date.now();
+      save(K_D, debts);
+      if (d.track) addEntry({ type: d.dir === "lent" ? "in" : "out", amount: v, cur: d.cur, w: "main", nt: true, note: (d.dir === "lent" ? t("debtRetFrom") : t("debtRetTo")) + d.who });
+      payId = null;
+    }
+    renderAll();
+  }
+
+
+  /* ---------- автоматично спестяване ---------- */
+  function spentBetween(a, b) {
+    var s = 0;
+    entries.forEach(function (e) {
+      if (e.type === "out" && !e.nt && (e.w || "main") === "main" && e.ts >= a && e.ts < b) s += conv(e.amount, e.cur || S.cur, S.cur);
+    });
+    return round2(s);
+  }
+  function runSweeps() {
+    if (sweeping) return false;
+    sweeping = true;
+    var changed = false, sChanged = false;
+    try {
+      if (S.eod && S.allow > 0 && S.eodDay) {
+        var today = startOfDay(Date.now()), d = parseYmd(S.eodDay), n = 0;
+        d.setDate(d.getDate() + 1);
+        while (d.getTime() < today && n < 31) {
+          var s0 = d.getTime(), e0 = new Date(s0); e0.setDate(e0.getDate() + 1);
+          var left = round2(allowNow() - spentBetween(s0, e0.getTime()));
+          var amt = Math.min(left, round2(bal("main", S.cur)));
+          if (amt >= 0.01) {
+            entries.push({ id: uid(), ts: e0.getTime() - 1000, type: "xfer", src: "main", dst: "savings", amount: amt, cur: S.cur, auto: "eod" });
+            changed = true;
+          }
+          S.eodDay = ymd(d); sChanged = true;
+          d.setDate(d.getDate() + 1); n++;
+        }
+      }
+      if (S.capOn && S.cap > 0) {
+        var cap = round2(conv(S.cap, S.capCur || S.cur, S.cur)), b = round2(bal("main", S.cur));
+        if (b - cap >= 0.01) {
+          entries.push({ id: uid(), ts: Date.now(), type: "xfer", src: "main", dst: "savings", amount: round2(b - cap), cur: S.cur, auto: "cap" });
+          changed = true;
+        }
+      }
+      if (changed) save(K_E, entries);
+      if (sChanged) save(K_S, S);
+    } finally { sweeping = false; }
+    return changed;
+  }
+  function renderSavings() {
+    $("savVal").textContent = money(bal("savings", S.cur), S.cur);
+    $("sEod").checked = !!S.eod;
+    var hint = $("sEodHint"); hint.hidden = S.allow > 0; hint.textContent = t("savNeedAllow");
+    $("sCapOn").checked = !!S.capOn;
+    $("sCapLbl").textContent = t("savCapAmt") + " (" + (S.lang === "en" ? CURS[S.cur].en : CURS[S.cur].bg) + ")";
+    if (document.activeElement !== $("sCapAmt")) {
+      var cv = S.cap > 0 ? round2(conv(S.cap, S.capCur || S.cur, S.cur)) : 0;
+      $("sCapAmt").value = cv > 0 ? String(cv).replace(".", S.lang === "bg" ? "," : ".") : "";
+    }
+    var list = $("savList"); list.textContent = "";
+    var mine = sortedEntries().filter(function (e) { return touches(e, "savings"); });
+    mine.slice(0, 20).forEach(function (e) { list.appendChild(rowEl(e, "full", S.cur, "savings")); });
+    $("savEmpty").hidden = mine.length > 0;
+  }
+  function saveCap() {
+    var on = $("sCapOn").checked, raw = $("sCapAmt").value.trim(), amt = raw ? parseAmount(raw) : (S.cap > 0 ? S.cap : null);
+    $("sCapAmt").classList.remove("bad");
+    if (raw && amt === null) { $("sCapAmt").classList.add("bad"); showMsg("sMsg", t("errAmt")); $("sCapOn").checked = !!S.capOn; return; }
+    if (on && amt === null) { $("sCapAmt").classList.add("bad"); showMsg("sMsg", t("errAmt")); $("sCapOn").checked = false; $("sCapAmt").focus(); return; }
+    if (raw && amt !== null) { S.cap = amt; S.capCur = S.cur; }
+    S.capOn = on && S.cap > 0; save(K_S, S); showMsg("sMsg", ""); renderAll();
+  }
+  function toggleEod() {
+    var on = $("sEod").checked;
+    if (on && !(S.allow > 0)) { $("sEod").checked = false; $("sEodHint").hidden = false; return; }
+    S.eod = on;
+    if (on) { var y = new Date(); y.setHours(0, 0, 0, 0); y.setDate(y.getDate() - 1); S.eodDay = ymd(y); }
+    save(K_S, S); renderAll();
+  }
+
+  /* ---------- няколко сейфа ---------- */
+  function renderVaultSettings() {
+    var box = $("vList"); box.textContent = "";
+    var locked = vaultLocked();
+    visVaults().forEach(function (v) {
+      var r = el("div", "qrow");
+      var m = el("div", "meta"); m.appendChild(el("div", "t", wname(v.id)));
+      m.appendChild(el("div", "d", locked ? "••••" : money(bal(v.id, S.cur), S.cur)));
+      r.appendChild(m);
+      if (v.id !== "vault") { var x = el("button", "del", "×"); x.type = "button"; x.setAttribute("data-vdel", v.id); x.setAttribute("aria-label", t("del")); r.appendChild(x); }
+      box.appendChild(r);
+    });
+  }
+  function addVault() {
+    var name = $("vName").value.trim();
+    $("vName").classList.remove("bad");
+    if (!name) { $("vName").classList.add("bad"); showMsg("vMsg", t("errVName")); $("vName").focus(); return; }
+    if (visVaults().length >= 8) { showMsg("vMsg", t("vaultLimit")); return; }
+    vaultList.push({ id: "v" + uid(), name: name }); save(K_VL, vaultList);
+    $("vName").value = ""; showMsg("vMsg", ""); renderAll();
+  }
+  function delVault(id) {
+    if (!canSeeVault()) { askUnlock(function () { delVault(id); }); return; }
+    var v = vaultById(id); if (!v || id === "vault") return;
+    if (Math.abs(round2(bal(id, S.cur))) >= 0.01) { showMsg("vMsg", t("vaultNotEmpty")); return; }
+    v.hidden = true; save(K_VL, vaultList); showMsg("vMsg", "");
+    if (S.ctx === id) { S.ctx = "main"; save(K_S, S); }
+    renderAll();
+  }
+
+  /* ---------- хора (дългове) ---------- */
+  function personKey(w) { return String(w).trim().toLowerCase(); }
+  function personStats() {
+    var m = {}, order = [];
+    debts.forEach(function (d) {
+      var k = personKey(d.who);
+      if (!m[k]) { m[k] = { name: d.who, gave: 0, took: 0, net: 0 }; order.push(k); }
+      var o = m[k], a = conv(d.amount, d.cur, S.cur), l = d.closed ? 0 : conv(debtLeft(d), d.cur, S.cur);
+      if (d.dir === "lent") { o.gave += a; o.net += l; } else { o.took += a; o.net -= l; }
+    });
+    return order.map(function (k) { return m[k]; });
+  }
+  function renderPeople() {
+    var box = $("dPeople"), ps = personStats();
+    box.textContent = "";
+    box.hidden = !ps.length;
+    var dl = $("dNames"); dl.textContent = "";
+    ps.forEach(function (p) { var o = document.createElement("option"); o.value = p.name; dl.appendChild(o); });
+    if (!ps.length) return;
+    box.appendChild(el("div", "ph", t("peopleTitle")));
+    ps.sort(function (a, b) { return Math.abs(b.net) - Math.abs(a.net); }).forEach(function (p) {
+      var row = el("div", "p"), m = el("div");
+      m.appendChild(el("div", "pn", p.name));
+      m.appendChild(el("div", "ps", t("pGave") + money(round2(p.gave), S.cur) + " · " + t("pTook") + money(round2(p.took), S.cur)));
+      var n = round2(p.net), v;
+      if (Math.abs(n) < 0.01) v = el("div", "pv eq", t("pQuits"));
+      else if (n > 0) v = el("div", "pv pos", t("pOwesYou") + money(n, S.cur));
+      else v = el("div", "pv neg", t("pYouOwe") + money(-n, S.cur));
+      row.appendChild(m); row.appendChild(v); box.appendChild(row);
+    });
+  }
+  function renderDebtHint() {
+    var h = $("dHint"), k = personKey($("dWho").value);
+    h.hidden = true;
+    if (!k) return;
+    personStats().forEach(function (p) {
+      if (personKey(p.name) === k) {
+        h.hidden = false;
+        h.textContent = t("dHist").replace("{a}", money(round2(p.gave), S.cur)).replace("{b}", money(round2(p.took), S.cur));
+      }
+    });
+  }
+
+
+  /* ---------- подписи за API (WebCrypto) ---------- */
+  function u8(str) { return new TextEncoder().encode(str); }
+  function toHex(buf) { var a = new Uint8Array(buf), o = ""; for (var i = 0; i < a.length; i++) o += (a[i] < 16 ? "0" : "") + a[i].toString(16); return o; }
+  function b64ToBytes(b64) { var bin = atob(b64.replace(/\s/g, "")), a = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i); return a; }
+  function bytesToB64(buf) { var a = new Uint8Array(buf), s = ""; for (var i = 0; i < a.length; i++) s += String.fromCharCode(a[i]); return btoa(s); }
+  function b64url(buf) { return bytesToB64(buf).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
+  function hmacHex(secret, msg) {
+    return crypto.subtle.importKey("raw", u8(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"])
+      .then(function (k) { return crypto.subtle.sign("HMAC", k, u8(msg)); }).then(toHex);
+  }
+  function krakenSign(secretB64, path, nonce, post) {
+    return crypto.subtle.digest("SHA-256", u8(String(nonce) + post)).then(function (h) {
+      var p = u8(path), m = new Uint8Array(p.length + h.byteLength); m.set(p, 0); m.set(new Uint8Array(h), p.length);
+      return crypto.subtle.importKey("raw", b64ToBytes(secretB64), { name: "HMAC", hash: "SHA-512" }, false, ["sign"])
+        .then(function (k) { return crypto.subtle.sign("HMAC", k, m); });
+    }).then(bytesToB64);
+  }
+  function ecToPkcs8(pem) {
+    var isP8 = /BEGIN PRIVATE KEY/.test(pem);
+    var der = b64ToBytes(String(pem).replace(/\\n/g, "\n").replace(/-----[^-]+-----/g, "").replace(/\s/g, ""));
+    if (isP8) return der;
+    var i = -1, j = -1, k;
+    for (k = 4; k < der.length - 1; k++) if (der[k] === 0x04 && der[k + 1] === 0x20) { i = k + 2; break; }
+    for (k = 4; k < der.length - 5; k++) if (der[k] === 0xa1 && der[k + 2] === 0x03 && der[k + 3] === 0x42 && der[k + 4] === 0x00) { j = k + 5; break; }
+    if (i < 0 || j < 0 || der.length < j + 65) throw new Error("bad key");
+    var head = [0x30,0x81,0x87,0x02,0x01,0x00,0x30,0x13,0x06,0x07,0x2a,0x86,0x48,0xce,0x3d,0x02,0x01,0x06,0x08,0x2a,0x86,0x48,0xce,0x3d,0x03,0x01,0x07,0x04,0x6d,0x30,0x6b,0x02,0x01,0x01,0x04,0x20];
+    var mid = [0xa1,0x44,0x03,0x42,0x00], out = new Uint8Array(head.length + 32 + mid.length + 65);
+    out.set(head, 0); out.set(der.slice(i, i + 32), head.length); out.set(mid, head.length + 32); out.set(der.slice(j, j + 65), head.length + 32 + mid.length);
+    return out;
+  }
+  function coinbaseJwt(name, pem, method, host, path) {
+    var pk;
+    try { pk = ecToPkcs8(pem); } catch (e) { return Promise.reject(new Error("bad key")); }
+    var now = Math.floor(Date.now() / 1000), nonceB = new Uint8Array(16); crypto.getRandomValues(nonceB);
+    var hdr = { alg: "ES256", kid: name, nonce: toHex(nonceB), typ: "JWT" };
+    var pl = { sub: name, iss: "cdp", nbf: now, exp: now + 120, uri: method + " " + host + path };
+    var input = b64url(u8(JSON.stringify(hdr))) + "." + b64url(u8(JSON.stringify(pl)));
+    return crypto.subtle.importKey("pkcs8", pk, { name: "ECDSA", namedCurve: "P-256" }, false, ["sign"])
+      .then(function (k) { return crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, k, u8(input)); })
+      .then(function (sig) { return input + "." + b64url(sig); });
+  }
+
+  /* ---------- мрежа: през обвивката (родния слой) или директно ---------- */
+  var netPend = {}, netSeq = 0, bridge = null, bridgeWait = [];
+  window.addEventListener("message", function (ev) {
+    var d = ev.data; if (!d || typeof d !== "object") return;
+    if (d.t === "http-pong") { bridge = true; bridgeWait.splice(0).forEach(function (f) { f(true); }); }
+    else if (d.t === "http-res" && netPend[d.id]) { var f2 = netPend[d.id]; delete netPend[d.id]; f2(d); }
+  });
+  function bridgeReady() {
+    return new Promise(function (res) {
+      if (bridge !== null) return res(bridge);
+      if (window.parent === window) { bridge = false; return res(false); }
+      bridgeWait.push(res);
+      try { parent.postMessage({ t: "http-ping" }, "*"); } catch (e) {}
+      setTimeout(function () { if (bridge === null) { bridge = false; bridgeWait.splice(0).forEach(function (f) { f(false); }); } }, 1500);
+    });
+  }
+  function netFetch(url, o) {
+    o = o || {};
+    return bridgeReady().then(function (br) {
+      if (br) {
+        return new Promise(function (res, rej) {
+          var id = ++netSeq;
+          netPend[id] = function (d) { if (d.err) rej(new Error(d.err)); else res({ status: d.status, text: d.text }); };
+          parent.postMessage({ t: "http", id: id, url: url, method: o.method || "GET", headers: o.headers || {}, body: o.body || null }, "*");
+        });
+      }
+      return fetch(url, { method: o.method || "GET", headers: o.headers || {}, body: o.body || undefined })
+        .then(function (r) { return r.text().then(function (tx) { return { status: r.status, text: tx }; }); });
+    });
+  }
+  function jsonOrThrow(r, what) {
+    var j = null; try { j = JSON.parse(r.text); } catch (e) {}
+    if (r.status >= 200 && r.status < 300 && j) return j;
+    var m = j && (j.msg || (j.error && (Array.isArray(j.error) ? j.error.join(", ") : j.error)) || j.message);
+    throw new Error((m ? String(m) : what + " HTTP " + r.status).slice(0, 160));
+  }
+  function addBal(m, asset, q) {
+    asset = normAsset(asset); q = parseFloat(q);
+    if (!asset || FIAT[asset] || !isFinite(q) || q === 0) return;
+    m[asset] = (m[asset] || 0) + q;
+  }
+
+  /* Binance: само четене, подпис HMAC-SHA256 */
+  function binanceBalances(c) {
+    var hosts = ["https://api.binance.com", "https://api1.binance.com", "https://api2.binance.com"];
+    function call(method, path, params, hi) {
+      var q = (params ? params + "&" : "") + "recvWindow=10000&timestamp=" + Date.now();
+      return hmacHex(c.secret, q).then(function (sig) {
+        return netFetch(hosts[hi] + path + "?" + q + "&signature=" + sig, { method: method, headers: { "X-MBX-APIKEY": c.key } });
+      }).catch(function (e) { if (hi + 1 < hosts.length) return call(method, path, params, hi + 1); throw e; });
+    }
+    var bal = {};
+    return call("GET", "/api/v3/account", "omitZeroBalances=true", 0).then(function (r) { return jsonOrThrow(r, "Binance"); }).then(function (j) {
+      var spot = {}, earnOk = false;
+      (j.balances || []).forEach(function (b) { addBal(spot, b.asset, (parseFloat(b.free) || 0) + (parseFloat(b.locked) || 0)); });
+      var tail = [];
+      tail.push(call("POST", "/sapi/v1/asset/get-funding-asset", "", 0).then(function (r) { return jsonOrThrow(r, ""); })
+        .then(function (a) { (a || []).forEach(function (b) { addBal(bal, b.asset, (parseFloat(b.free) || 0) + (parseFloat(b.locked) || 0) + (parseFloat(b.freeze) || 0)); }); }).catch(function () {}));
+      tail.push(call("GET", "/sapi/v1/simple-earn/flexible/position", "size=100", 0).then(function (r) { return jsonOrThrow(r, ""); })
+        .then(function (a) { earnOk = true; (a.rows || []).forEach(function (b) { addBal(bal, b.asset, b.totalAmount); }); }).catch(function () {}));
+      tail.push(call("GET", "/sapi/v1/simple-earn/locked/position", "size=100", 0).then(function (r) { return jsonOrThrow(r, ""); })
+        .then(function (a) { (a.rows || []).forEach(function (b) { addBal(bal, b.asset, (b.position && b.position.amount) || b.amount); }); }).catch(function () {}));
+      return Promise.all(tail).then(function () {
+        Object.keys(spot).forEach(function (a) { bal[a] = (bal[a] || 0) + spot[a]; });
+        if (earnOk) { /* LD* токените в спота вече са в Earn позициите */
+          (j.balances || []).forEach(function (b) { if (/^LD/.test(b.asset) && (CRYPTO_IDS[normAsset(b.asset)] || FIAT[normAsset(b.asset)] !== undefined)) { var a = normAsset(b.asset), q = (parseFloat(b.free) || 0) + (parseFloat(b.locked) || 0); if (bal[a]) bal[a] -= q; } });
+        }
+        return bal;
+      });
+    });
+  }
+  /* Kraken: само „Query Funds“, подпис HMAC-SHA512 */
+  function krakenBalances(c) {
+    var path = "/0/private/Balance", nonce = Date.now() * 1000, post = "nonce=" + nonce;
+    return krakenSign(c.secret, path, nonce, post).then(function (sig) {
+      return netFetch("https://api.kraken.com" + path, { method: "POST", headers: { "API-Key": c.key, "API-Sign": sig, "Content-Type": "application/x-www-form-urlencoded" }, body: post });
+    }).then(function (r) { return jsonOrThrow(r, "Kraken"); }).then(function (j) {
+      if (j.error && j.error.length) throw new Error(j.error.join(", "));
+      var bal = {}; Object.keys(j.result || {}).forEach(function (a) { addBal(bal, a, j.result[a]); }); return bal;
+    });
+  }
+  /* Coinbase: CDP ключ, JWT (ES256), право „View“ */
+  function coinbaseBalances(c) {
+    var bal = {}, host = "api.coinbase.com", path = "/api/v3/brokerage/accounts";
+    function page(cursor, n) {
+      return coinbaseJwt(c.name, c.pem, "GET", host, path).then(function (jwt) {
+        return netFetch("https://" + host + path + "?limit=250" + (cursor ? "&cursor=" + encodeURIComponent(cursor) : ""), { headers: { Authorization: "Bearer " + jwt } });
+      }).then(function (r) { return jsonOrThrow(r, "Coinbase"); }).then(function (j) {
+        (j.accounts || []).forEach(function (a) { addBal(bal, a.currency, (parseFloat(a.available_balance && a.available_balance.value) || 0) + (parseFloat(a.hold && a.hold.value) || 0)); });
+        if (j.has_next && j.cursor && n < 10) return page(j.cursor, n + 1);
+      });
+    }
+    return page("", 0).then(function () { return bal; });
+  }
+  var API_DEF = {
+    binance: { name: "Binance", fn: binanceBalances, fields: [{ id: "key", label: "apiKey", text: true }, { id: "secret", label: "apiSecret" }], hint: "apiHintBinance" },
+    coinbase: { name: "Coinbase", fn: coinbaseBalances, fields: [{ id: "name", label: "apiCbName", text: true }, { id: "pem", label: "apiCbPem", multiline: true }], hint: "apiHintCoinbase" },
+    kraken: { name: "Kraken", fn: krakenBalances, fields: [{ id: "key", label: "apiKey", text: true }, { id: "secret", label: "apiSecret" }], hint: "apiHintKraken" }
+  };
+  function apiMsg(e) {
+    var m = String(e && e.message || e), mode = " [" + (bridge ? "native" : "web") + ": " + m.slice(0, 90) + "]";
+    if (/Failed to fetch|NetworkError|Load failed|net::|timeout/i.test(m)) return t("apiNetErr") + mode;
+    return t("apiErrPre") + m + (bridge ? "" : " [web]");
+  }
+  function syncApi(p, creds) {
+    return API_DEF[p].fn(creds).then(function (bal) {
+      Object.keys(bal).forEach(function (a) { bal[a] = Math.round(bal[a] * 1e10) / 1e10; if (Math.abs(bal[a]) < 1e-9) delete bal[a]; });
+      apiSnap[p] = { ts: Date.now(), bal: bal }; save(K_APIS, apiSnap); delete apiErr[p]; cpTry = 0;
+    });
+  }
+  function refreshApis(force) {
+    if (apiBusy) return;
+    var now = Date.now(), list = Object.keys(apiCreds).filter(function (p) {
+      if (!API_DEF[p]) return false;
+      var snap = apiSnap[p];
+      if (force) return true;
+      return (!snap || now - snap.ts > 600000) && now - (apiTry[p] || 0) > 120000;
+    });
+    if (!list.length) return;
+    apiBusy = true;
+    list.reduce(function (pr, p) {
+      return pr.then(function () { apiTry[p] = Date.now(); return syncApi(p, apiCreds[p]).catch(function (e) { apiErr[p] = apiMsg(e); }); });
+    }, Promise.resolve()).then(function () { apiBusy = false; renderAll(); });
+  }
+  function connectApi(p) {
+    var d = API_DEF[p];
+    openModal({
+      title: d.name, text: t(d.hint), ok: t("apiConnect"),
+      fields: d.fields.map(function (f) { return { id: f.id, label: t(f.label), text: f.text, multiline: f.multiline }; }),
+      onOk: function (v) {
+        var cr = {}, ok = true;
+        d.fields.forEach(function (f) { cr[f.id] = String(v[f.id] || "").trim(); if (!cr[f.id]) ok = false; });
+        if (!ok) return Promise.resolve(t("apiBadKey"));
+        return syncApi(p, cr).then(function () { apiCreds[p] = cr; save(K_API, apiCreds); return null; }, function (e) { return apiMsg(e); });
+      },
+      after: renderAll
+    });
+  }
+  function removeApi(p) {
+    openModal({
+      title: API_DEF[p].name, text: t("apiRemoveQ"), fields: [], ok: t("apiRemove"),
+      onOk: function () { delete apiCreds[p]; delete apiSnap[p]; delete apiErr[p]; save(K_API, apiCreds); save(K_APIS, apiSnap); return Promise.resolve(null); },
+      after: renderAll
+    });
+  }
+  function renderApiSettings() {
+    var box = $("apiList"); box.textContent = "";
+    Object.keys(API_DEF).forEach(function (p) {
+      var d = API_DEF[p], on = !!apiCreds[p], snap = apiSnap[p];
+      var r = el("div", "qrow"), m = el("div", "meta");
+      m.appendChild(el("div", "t", d.name));
+      var st = on ? (apiErr[p] ? apiErr[p] : (snap ? t("apiOn") + new Date(snap.ts).toLocaleString(loc(), { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : t("apiOn") + "…")) : t("apiOff");
+      var sd = el("div", "d", st); if (on && apiErr[p]) sd.style.color = "var(--out)"; m.appendChild(sd);
+      r.appendChild(m);
+      var mk = function (label, fn, cls) { var b = el("button", cls || "link accent", label); b.type = "button"; b.addEventListener("click", fn); r.appendChild(b); };
+      if (on) { mk(t("apiRefresh"), function () { apiTry[p] = 0; refreshApis(true); }); mk(t("apiRemove"), function () { removeApi(p); }, "link danger"); }
+      else mk(t("apiConnect"), function () { connectApi(p); });
+      box.appendChild(r);
+    });
+  }
+
+  /* ---------- импорт от CSV ---------- */
+  var CRYPTO_IDS = { BTC: "bitcoin", ETH: "ethereum", USDT: "tether", USDC: "usd-coin", BNB: "binancecoin", SOL: "solana", XRP: "ripple", ADA: "cardano", DOGE: "dogecoin", DOT: "polkadot", POL: "polygon-ecosystem-token", MATIC: "matic-network", AVAX: "avalanche-2", LINK: "chainlink", LTC: "litecoin", TRX: "tron", SHIB: "shiba-inu", ATOM: "cosmos", XLM: "stellar", BCH: "bitcoin-cash", UNI: "uniswap", ETC: "ethereum-classic", NEAR: "near", APT: "aptos", ARB: "arbitrum", OP: "optimism", FIL: "filecoin", ALGO: "algorand", XMR: "monero", DAI: "dai", TON: "the-open-network", SUI: "sui", PEPE: "pepe", BUSD: "binance-usd", AAVE: "aave", MKR: "maker", XTZ: "tezos", EOS: "eos", SAND: "the-sandbox", MANA: "decentraland", CRO: "crypto-com-chain", INJ: "injective-protocol", HBAR: "hedera-hashgraph", ICP: "internet-computer", GRT: "the-graph", COMP: "compound-governance-token", SNX: "havven", LDO: "lido-dao", RUNE: "thorchain", KSM: "kusama", FLOW: "flow", EGLD: "elrond-erd-2" };
+  var FIAT = { EUR: 1, USD: 1, GBP: 1, BGN: 1, UAH: 1, CAD: 1, AUD: 1, JPY: 1, CHF: 1, TRY: 1, PLN: 1, RON: 1, CZK: 1, HUF: 1, RSD: 1, MKD: 1, SEK: 1, NOK: 1, DKK: 1, RUB: 1 };
+  var KR_MAP = { XXBT: "BTC", XBT: "BTC", XETH: "ETH", XXRP: "XRP", XLTC: "LTC", XXLM: "XLM", XDG: "DOGE", XXDG: "DOGE", XETC: "ETC", XXMR: "XMR", XMLN: "MLN", XREP: "REP", ETH2: "ETH", ZEUR: "EUR", ZUSD: "USD", ZGBP: "GBP", ZCAD: "CAD", ZJPY: "JPY", ZAUD: "AUD" };
+
+  function normAsset(a) {
+    a = String(a || "").trim().toUpperCase();
+    if (KR_MAP[a]) return KR_MAP[a];
+    if (a.indexOf(".") > 0) a = a.split(".")[0];
+    if (KR_MAP[a]) return KR_MAP[a];
+    if (a.length > 3 && a.indexOf("LD") === 0 && (CRYPTO_IDS[a.slice(2)] || FIAT[a.slice(2)])) a = a.slice(2);
+    return a;
+  }
+  function num(v) {
+    v = String(v == null ? "" : v).replace(/[\s ]/g, "").replace(/[−–]/g, "-");
+    if (!v) return NaN;
+    var c = v.indexOf(","), d = v.indexOf(".");
+    if (c >= 0 && d >= 0) v = v.replace(/,/g, "");
+    else if (c >= 0) v = /,\d{3}$/.test(v) && v.indexOf(",") === v.lastIndexOf(",") && v.replace(/^-/, "").length > 4 ? v.replace(/,/g, "") : v.replace(",", ".");
+    var n = parseFloat(v);
+    return isFinite(n) && /^-?[\d.]+(e-?\d+)?$/i.test(v) ? n : NaN;
+  }
+  function parseCSV(text) {
+    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+    var head = text.split(/\r?\n/).filter(function (l) { return l.trim(); }).slice(0, 8), best = ",", bestN = -1;
+    [",", ";", "\t"].forEach(function (d) {
+      var n = 0; head.forEach(function (l) { n += l.split(d).length - 1; });
+      if (n > bestN) { bestN = n; best = d; }
+    });
+    var rows = [], row = [], cell = "", q = false, i, ch;
+    for (i = 0; i < text.length; i++) {
+      ch = text[i];
+      if (q) {
+        if (ch === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += ch;
+      } else if (ch === '"') q = true;
+      else if (ch === best) { row.push(cell); cell = ""; }
+      else if (ch === "\n" || ch === "\r") {
+        if (ch === "\r" && text[i + 1] === "\n") i++;
+        row.push(cell); cell = "";
+        if (row.length > 1 || row[0].trim()) rows.push(row);
+        row = [];
+      } else cell += ch;
+    }
+    row.push(cell); if (row.length > 1 || row[0].trim()) rows.push(row);
+    return rows;
+  }
+  function pdate(str, utc) {
+    str = String(str || "").trim().replace(/\sUTC$/i, "Z").replace(/\sGMT$/i, "Z");
+    var m = str.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?(Z)?/);
+    if (m) {
+      var a = [+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] || 0)];
+      return (utc || m[7]) ? Date.UTC(a[0], a[1], a[2], a[3], a[4], a[5]) : new Date(a[0], a[1], a[2], a[3], a[4], a[5]).getTime();
+    }
+    m = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (m) return new Date(+m[1], +m[2] - 1, +m[3], 12, 0, 0).getTime();
+    m = str.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})(?:[ T](\d{1,2}):(\d{2}))?/);
+    if (m) return new Date(+m[3], +m[2] - 1, +m[1], +(m[4] || 12), +(m[5] || 0)).getTime();
+    var t0 = Date.parse(str); return isFinite(t0) ? t0 : NaN;
+  }
+  function colIdx(h, names) {
+    for (var n = 0; n < names.length; n++) for (var i = 0; i < h.length; i++) if (h[i] === names[n]) return i;
+    for (n = 0; n < names.length; n++) for (i = 0; i < h.length; i++) if (h[i].indexOf(names[n]) >= 0) return i;
+    return -1;
+  }
+  function existingKeys() {
+    var m = {};
+    entries.forEach(function (e) { if (e.ik) m[e.ik] = 1; });
+    crypto_.forEach(function (l) { if (l.k) m[l.k] = 1; });
+    return m;
+  }
+  /* връща { src, kind, items, dup, skip, badCur, bal, assets } */
+  function analyzeCSV(text) {
+    var rows = parseCSV(text), hi = -1, h = null, i;
+    for (i = 0; i < Math.min(rows.length, 30); i++) {
+      var low = rows[i].map(function (c) { return String(c).trim().toLowerCase(); });
+      var j = low.join("|");
+      if ((j.indexOf("timestamp") >= 0 && j.indexOf("transaction type") >= 0) || (j.indexOf("txid") >= 0 && j.indexOf("asset") >= 0) || (j.indexOf("utc_time") >= 0) || (j.indexOf("date(utc)") >= 0) || (j.indexOf("completed date") >= 0 || j.indexOf("started date") >= 0) || (j.indexOf("ordertxid") >= 0)) { hi = i; h = low; break; }
+    }
+    if (hi < 0) { for (i = 0; i < Math.min(rows.length, 5); i++) { if (rows[i].length >= 3) { hi = i; h = rows[i].map(function (c) { return String(c).trim().toLowerCase(); }); break; } } }
+    if (hi < 0) return null;
+    var hj = "|" + h.join("|") + "|", body = rows.slice(hi + 1);
+    var has = function (x) { return hj.indexOf("|" + x + "|") >= 0; };
+    var src = null;
+    if (has("completed date") && has("amount") && has("currency")) src = "Revolut";
+    else if (has("utc_time") && has("operation") && has("coin")) src = "Binance";
+    else if (has("date(utc)") && has("pair") && has("side")) src = "BinanceTrades";
+    else if (has("timestamp") && has("transaction type") && has("asset")) src = "Coinbase";
+    else if (has("txid") && has("refid") && has("asset") && has("amount")) src = "Kraken";
+    else if (has("txid") && has("ordertxid") && has("pair") && has("vol")) src = "KrakenTrades";
+    else if ((colIdx(h, ["date", "time", "completed"]) >= 0) && colIdx(h, ["amount"]) >= 0) src = "Generic";
+    if (!src) return null;
+    var out = { src: src, kind: "fiat", items: [], dup: 0, skip: 0, badCur: {}, bal: {}, assets: {} };
+    var keys = existingKeys(), seen = {};
+    var addKey = function (k) { var n = (seen[k] || 0); seen[k] = n + 1; return k + "#" + n; };
+    var push = function (it, key) {
+      var k = addKey(src + "|" + cyrb53(key));
+      if (keys[k]) { out.dup++; return; }
+      it.ik = k; out.items.push(it);
+    };
+    var c = function (names) { return colIdx(h, names); };
+    var r, t0, v;
+    if (src === "Revolut" || src === "Generic") {
+      var iS = c(["state", "status"]), iD = c(["completed date", "started date", "date", "time"]), iD2 = c(["started date"]),
+          iDesc = c(["description", "details", "merchant", "note", "reference"]), iA = c(["amount"]), iF = c(["fee"]), iC = c(["currency"]), iB = c(["balance"]), iT = c(["type"]);
+      var lastBal = {};
+      body.forEach(function (r) {
+        if (r.length < 3) return;
+        var st = iS >= 0 ? String(r[iS] || "").trim().toUpperCase() : "COMPLETED";
+        if (st && st !== "COMPLETED" && st !== "SUCCESS" && st !== "DONE" && st !== "BOOKED") { out.skip++; return; }
+        var ts = pdate(r[iD] || (iD2 >= 0 ? r[iD2] : "")); if (isNaN(ts) && iD2 >= 0) ts = pdate(r[iD2]);
+        var amt = num(r[iA]), fee = iF >= 0 && String(r[iF] || "").trim() ? num(r[iF]) : 0;
+        var cur = iC >= 0 ? String(r[iC] || "").trim().toUpperCase() : S.cur;
+        if (isNaN(ts) || isNaN(amt) || isNaN(fee)) { out.skip++; return; }
+        if (!CURS[cur]) { out.badCur[cur || "?"] = 1; out.skip++; return; }
+        var net = round2(amt - fee); if (net === 0) { out.skip++; return; }
+        var desc = (iDesc >= 0 ? String(r[iDesc] || "").trim() : "") || (iT >= 0 ? String(r[iT] || "").trim() : "");
+        push({ type: net < 0 ? "out" : "in", amount: Math.abs(net), cur: cur, note: desc.slice(0, 60), ts: ts, imp: src }, [ts, desc, amt, fee, cur, iB >= 0 ? r[iB] : "", iT >= 0 ? r[iT] : ""].join("|"));
+        if (iB >= 0) { var bn = num(r[iB]); if (!isNaN(bn) && (!lastBal[cur] || ts >= lastBal[cur].ts)) lastBal[cur] = { ts: ts, v: bn }; }
+      });
+      Object.keys(lastBal).forEach(function (k) { out.bal[k] = lastBal[k].v; });
+      return out;
+    }
+    out.kind = "crypto";
+    var addLot = function (ts, asset, qty, key) {
+      asset = normAsset(asset);
+      if (!asset || FIAT[asset]) { out.skip += 0; return; }
+      if (isNaN(ts) || isNaN(qty) || qty === 0) { out.skip++; return; }
+      push({ ts: ts, a: asset, q: qty, src: src.replace("Trades", "") }, key);
+      out.assets[asset] = 1;
+    };
+    var D;
+    if (src === "Binance") {
+      var bT = c(["utc_time"]), bO = c(["operation"]), bC = c(["coin"]), bCh = c(["change"]), bR = c(["remark"]);
+      body.forEach(function (r) { if (r.length < 4) return; addLot(pdate(r[bT], true), r[bC], num(r[bCh]), [r[bT], r[bO], r[bC], r[bCh], bR >= 0 ? r[bR] : ""].join("|")); });
+    } else if (src === "BinanceTrades") {
+      var tD = c(["date(utc)"]), tP = c(["pair"]), tS = c(["side"]), tE = c(["executed"]), tA = c(["amount"]);
+      var sp = function (x) { var m = String(x || "").replace(/,/g, "").match(/^(-?[\d.]+(?:e-?\d+)?)\s*([A-Za-z0-9]+)$/); return m ? { q: parseFloat(m[1]), a: m[2] } : null; };
+      body.forEach(function (r) {
+        var ex = sp(r[tE]), am = sp(r[tA]), ts = pdate(r[tD], true), sd = String(r[tS] || "").toUpperCase();
+        if (!ex || !am || (sd !== "BUY" && sd !== "SELL")) { out.skip++; return; }
+        var k = [r[tD], r[tP], sd, r[tE], r[tA]].join("|"), sg = sd === "BUY" ? 1 : -1;
+        addLot(ts, ex.a, sg * ex.q, k + "|b"); addLot(ts, am.a, -sg * am.q, k + "|q");
+      });
+    } else if (src === "Coinbase") {
+      var cT = c(["timestamp"]), cTy = c(["transaction type"]), cA = c(["asset"]), cQ = c(["quantity transacted"]), cN = c(["notes"]), cI = c(["id"]);
+      var POS = /^(buy|receive|rewards income|learning reward|staking income|coinbase earn|inflation reward|advanced trade buy|deposit|reward)/i, NEG = /^(sell|send|advanced trade sell|withdrawal|withdraw)/i;
+      body.forEach(function (r) {
+        var ty = String(r[cTy] || "").trim(), ts = pdate(r[cT], true), q = num(r[cQ]), key = [r[cT], ty, r[cA], r[cQ], cI >= 0 && h[cI] === "id" ? r[cI] : ""].join("|");
+        if (/^convert/i.test(ty)) {
+          var m = String(cN >= 0 ? r[cN] : "").match(/Converted\s+([\d.,]+)\s+(\S+)\s+to\s+([\d.,]+)\s+(\S+)/i);
+          if (!m) { out.skip++; return; }
+          addLot(ts, m[2], -num(m[1]), key + "|f"); addLot(ts, m[4], num(m[3]), key + "|t");
+        } else if (POS.test(ty)) addLot(ts, r[cA], q, key);
+        else if (NEG.test(ty)) addLot(ts, r[cA], -q, key);
+        else out.skip++;
+      });
+    } else if (src === "Kraken") {
+      var kT = c(["time"]), kA = c(["asset"]), kAm = c(["amount"]), kF = c(["fee"]), kX = c(["txid"]);
+      body.forEach(function (r) {
+        var net = num(r[kAm]) - (kF >= 0 && String(r[kF] || "").trim() ? num(r[kF]) : 0);
+        addLot(pdate(r[kT], true), r[kA], net, [r[kX], r[kA], r[kAm], r[kT]].join("|"));
+      });
+    } else if (src === "KrakenTrades") {
+      var qT = c(["time"]), qP = c(["pair"]), qTy = c(["type"]), qV = c(["vol"]), qCo = c(["cost"]), qX = c(["txid"]);
+      var QUOTES = ["USDT", "USDC", "ZEUR", "ZUSD", "ZGBP", "ZCAD", "ZJPY", "ZAUD", "XXBT", "XBT", "XETH", "EUR", "USD", "GBP", "CAD", "JPY", "CHF", "AUD", "BTC", "ETH"];
+      body.forEach(function (r) {
+        var pair = String(r[qP] || "").toUpperCase(), qa = null;
+        QUOTES.some(function (x) { if (pair.length > x.length && pair.slice(-x.length) === x) { qa = x; return true; } return false; });
+        var ba = qa ? pair.slice(0, pair.length - qa.length) : null, sd = String(r[qTy] || "").toLowerCase();
+        if (!ba || (sd !== "buy" && sd !== "sell")) { out.skip++; return; }
+        var sg = sd === "buy" ? 1 : -1, ts = pdate(r[qT], true), key = [r[qX], r[qP], r[qV], r[qT]].join("|");
+        addLot(ts, ba, sg * num(r[qV]), key + "|b"); addLot(ts, qa, -sg * num(r[qCo]), key + "|q");
+      });
+    }
+    return out;
+  }
+  function srcLabel(x) { return ({ Revolut: "Revolut", Binance: "Binance", BinanceTrades: "Binance (trades)", Coinbase: "Coinbase", Kraken: "Kraken", KrakenTrades: "Kraken (trades)", Generic: "CSV" })[x] || x; }
+
+  function previewImport(res) {
+    impPending = res;
+    var L = [t("impRecog") + srcLabel(res.src)];
+    if (res.kind === "crypto" && apiSnap[res.src.replace("Trades", "").toLowerCase()]) L.push(t("impApiWins"));
+    L.push(t("impNewRows") + res.items.length);
+    if (res.dup) L.push(t("impDup") + res.dup);
+    if (res.skip) L.push(t("impSkip") + res.skip);
+    var bad = Object.keys(res.badCur); if (bad.length) L.push(t("impBadCur") + bad.join(", "));
+    if (res.items.length) {
+      var mn = Infinity, mx = 0;
+      res.items.forEach(function (it) { if (it.ts < mn) mn = it.ts; if (it.ts > mx) mx = it.ts; });
+      var df = function (x) { return new Date(x).toLocaleDateString(loc(), { day: "numeric", month: "short", year: "numeric" }); };
+      L.push(t("impPeriod") + df(mn) + " – " + df(mx));
+      if (res.kind === "fiat") {
+        var inn = 0, outt = 0;
+        res.items.forEach(function (it) { var v = conv(it.amount, it.cur, S.cur); if (it.type === "in") inn += v; else outt += v; });
+        L.push(t("impInOut").replace("{a}", money(round2(inn), S.cur)).replace("{b}", money(round2(outt), S.cur)));
+        var bl = Object.keys(res.bal).map(function (k) { return money(res.bal[k], k); });
+        if (bl.length) L.push(t("impBal") + bl.join(" · "));
+      } else {
+        L.push(t("impAssets") + Object.keys(res.assets).join(", "));
+        L.push(t("impFiatIgnored"));
+      }
+    }
+    $("impSum").textContent = L.join("\n");
+    $("impPreview").hidden = false; $("impYes").hidden = !res.items.length;
+    showMsg("impMsg", res.items.length ? "" : t("impEmpty"));
+  }
+  function cancelImport() { impPending = null; $("impPreview").hidden = true; }
+  function doImport() {
+    var res = impPending; if (!res || !res.items.length) { cancelImport(); return; }
+    var dest = $("impDest").value || "main";
+    if (res.kind === "fiat" && isVault(dest) && !canSeeVault()) { askUnlock(doImport); return; }
+    var ib = uid(), n = res.items.length;
+    if (res.kind === "fiat") {
+      res.items.forEach(function (it) { it.id = uid(); it.w = dest; it.ib = ib; entries.push(it); });
+      save(K_E, entries);
+    } else {
+      res.items.forEach(function (it) { it.id = uid(); it.k = it.ik; delete it.ik; it.ib = ib; crypto_.push(it); });
+      save(K_C, crypto_);
+    }
+    batches.push({ id: ib, src: srcLabel(res.src), kind: res.kind, ts: Date.now(), n: n }); save(K_IB, batches);
+    cancelImport(); showMsg("impMsg", "");
+    renderAll(); showToast(t("impDone") + n);
+  }
+  function readImportFile(f) {
+    showMsg("impMsg", ""); cancelImport();
+    if (f.size > 8 * 1024 * 1024) { showMsg("impMsg", t("impBig")); return; }
+    var fr = new FileReader();
+    fr.onerror = function () { showMsg("impMsg", t("impReadErr")); };
+    fr.onload = function () {
+      var res = null;
+      try { res = analyzeCSV(String(fr.result)); } catch (e) { res = null; }
+      if (!res) { showMsg("impMsg", t("impUnknown")); return; }
+      previewImport(res);
+    };
+    fr.readAsText(f);
+  }
+  function renderImportSettings() {
+    var sel = $("impDest"), keep = sel.value || "main"; sel.textContent = "";
+    ["main"].concat(visVaults().map(function (v) { return v.id; })).concat(["savings"]).forEach(function (id) {
+      var o = document.createElement("option"); o.value = id; o.textContent = wname(id); sel.appendChild(o);
+    });
+    sel.value = keep; if (sel.value !== keep) sel.value = "main";
+    var box = $("impList"); box.textContent = "";
+    if (batches.length) { var hd = el("p", "note", t("impList")); hd.style.cssText = "font-weight:500;color:var(--fg);font-size:15px;margin-top:8px"; box.appendChild(hd); }
+    batches.slice().reverse().forEach(function (b) {
+      var r = el("div", "qrow"), m = el("div", "meta");
+      m.appendChild(el("div", "t", b.src + " · " + b.n + t("impRecs")));
+      m.appendChild(el("div", "d", fullDate(b.ts)));
+      r.appendChild(m);
+      if (delImpId === b.id) {
+        var y = el("button", "yes", t("del")); y.type = "button"; y.setAttribute("data-idelyes", b.id);
+        y.style.cssText = "border-radius:12px;padding:8px 14px;background:var(--out);color:#2b0b07;border-color:var(--out);font-weight:700";
+        var n = el("button", null, t("no")); n.type = "button"; n.setAttribute("data-idelno", "1"); n.style.cssText = "border-radius:12px;padding:8px 14px";
+        r.appendChild(y); r.appendChild(n);
+      } else { var x = el("button", "del", "×"); x.type = "button"; x.setAttribute("data-idel", b.id); x.setAttribute("aria-label", t("del")); r.appendChild(x); }
+      box.appendChild(r);
+    });
+  }
+  function onImpListClick(ev) {
+    var b = ev.target.closest("button"); if (!b) return;
+    if (b.getAttribute("data-idel")) delImpId = b.getAttribute("data-idel");
+    else if (b.getAttribute("data-idelno")) delImpId = null;
+    else if (b.getAttribute("data-idelyes")) {
+      var id = b.getAttribute("data-idelyes");
+      entries = entries.filter(function (e) { return e.ib !== id; }); save(K_E, entries);
+      crypto_ = crypto_.filter(function (l) { return l.ib !== id; }); save(K_C, crypto_);
+      batches = batches.filter(function (x) { return x.id !== id; }); save(K_IB, batches); delImpId = null;
+    } else return;
+    renderAll();
+  }
+
+  /* ---------- крипто портфолио ---------- */
+  function holdings() {
+    var m = {};
+    crypto_.forEach(function (l) { if (apiSnap[String(l.src || "").toLowerCase()]) return; m[l.a] = (m[l.a] || 0) + l.q; });
+    Object.keys(apiSnap).forEach(function (p) { var b = apiSnap[p] && apiSnap[p].bal; if (b) Object.keys(b).forEach(function (a) { m[a] = (m[a] || 0) + b[a]; }); });
+    return Object.keys(m).filter(function (a) { return Math.abs(m[a]) > 1e-8; }).map(function (a) { return { a: a, q: m[a] }; });
+  }
+  function cryptoValue() {
+    var tot = 0, rows = holdings().map(function (x) {
+      var id = CRYPTO_IDS[x.a], pr = CP && CP.eur && id ? CP.eur[id] : null;
+      var val = typeof pr === "number" ? conv(x.q * pr, "EUR", S.cur) : null;
+      if (val !== null) tot += val;
+      return { a: x.a, q: x.q, val: val };
+    });
+    rows.sort(function (a, b) { return (b.val || 0) - (a.val || 0); });
+    return { total: tot, rows: rows };
+  }
+  function fetchCrypto(force) {
+    var ids = []; holdings().forEach(function (x) { if (CRYPTO_IDS[x.a]) ids.push(CRYPTO_IDS[x.a]); });
+    if (!ids.length || cpBusy) return;
+    var now = Date.now();
+    var missing = ids.some(function (id) { return !(CP && CP.eur && typeof CP.eur[id] === "number"); });
+    if (!force && ((CP && now - CP.ts < 600000 && !missing) || now - cpTry < 120000)) return;
+    cpBusy = true; cpTry = now;
+    fetch("https://api.coingecko.com/api/v3/simple/price?ids=" + encodeURIComponent(ids.join(",")) + "&vs_currencies=eur")
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+      .then(function (j) {
+        var eur = {}; ids.forEach(function (id) { if (j[id] && typeof j[id].eur === "number") eur[id] = j[id].eur; });
+        CP = { ts: Date.now(), eur: Object.assign({}, CP && CP.eur, eur) }; save(K_CP, CP);
+      })
+      .catch(function () {})
+      .then(function () { cpBusy = false; renderAll(); });
+  }
+  function renderCrypto() {
+    var rows = cryptoValue(), has = holdings().length > 0;
+    $("cryEmpty").hidden = has; $("cryBody").hidden = !has; $("cryRefresh").hidden = !has;
+    $("cryTot").checked = !!S.cryTot;
+    if (!has) return;
+    $("cryVal").textContent = money(round2(rows.total), S.cur);
+    var ul = $("cryList"); ul.textContent = "";
+    rows.rows.forEach(function (x) {
+      var li = el("li"), lab = el("span", null, x.a + " · " + String(Math.round(x.q * 1e8) / 1e8));
+      li.appendChild(lab); li.appendChild(el("span", null, x.val === null ? t("cryNoPrice") : money(round2(x.val), S.cur)));
+      ul.appendChild(li);
+    });
+    var note = t("cryNote2");
+    if (CP && CP.ts) note = t("cryPrices") + new Date(CP.ts).toLocaleString(loc(), { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) + ". " + note;
+    else if (cpTry && !cpBusy) note = t("cryNoNet") + " " + note;
+    $("cryNote").textContent = note;
+    fetchCrypto(false);
+  }
+  function afterRenderTasks() { refreshApis(false); }
+
+  function renderSettings() {
+    var sel = $("curSel");
+    if (!sel.options.length) {
+      Object.keys(CURS).forEach(function (code) { var o = document.createElement("option"); o.value = code; sel.appendChild(o); });
+    }
+    for (var i = 0; i < sel.options.length; i++) {
+      var code = sel.options[i].value, c = CURS[code];
+      sel.options[i].textContent = code + " (" + (S.lang === "en" ? c.en : c.bg) + ")";
+    }
+    sel.value = S.cur;
+    var tc = $("tCur");
+    if (!tc.options.length) { Object.keys(CURS).forEach(function (code) { var o = document.createElement("option"); o.value = code; o.textContent = code; tc.appendChild(o); }); tc.value = S.cur; }
+    var rn = $("rateNote");
+    if (rateState === "loading") rn.textContent = t("ratesLoading");
+    else if (R && R.date) rn.textContent = t("ratesOk") + new Date(R.date + "T00:00:00").toLocaleDateString(loc(), { day: "numeric", month: "long", year: "numeric" });
+    else rn.textContent = t("ratesApprox");
+    refreshPickers();
+    $("aLbl").textContent = S.lang === "bg" ? "Сума на ден (" + (CURS[S.cur].bg) + ")" : "Per day (" + CURS[S.cur].en + ")";
+    if (document.activeElement !== $("aAmt")) $("aAmt").value = S.allow > 0 ? String(allowNow()).replace(".", S.lang === "bg" ? "," : ".") : "";
+    $("aOff").hidden = !(S.allow > 0);
+    renderQuickSettings(); renderVaultSettings(); renderImportSettings();
+    $("fcOn").checked = !!S.fc;
+    $("pwStatus").textContent = pwOn() ? t("pwOn") : t("pwOff");
+    var pb = $("pwBtns"); pb.textContent = "";
+    var mk = function (label, fn, cls) { var b = el("button", cls || "sbtn", label); b.type = "button"; b.addEventListener("click", fn); pb.appendChild(b); };
+    if (!pwOn()) mk(t("setPw"), setPwFlow, "sbtn primary");
+    else { mk(t("changePw"), changePwFlow); mk(t("removePw"), removePwFlow); }
+  }
+
+  function renderNav() {
+    var btns = document.querySelectorAll(".nav button");
+    for (var i = 0; i < btns.length; i++) {
+      if (btns[i].getAttribute("data-go") === page) btns[i].setAttribute("aria-current", "page");
+      else btns[i].removeAttribute("aria-current");
+    }
+    $("gearBtn").setAttribute("aria-pressed", page === "settings" ? "true" : "false");
+    ["home", "wallets", "savings", "goals", "history", "settings"].forEach(function (p) { $("page-" + p).hidden = p !== page; });
+  }
+  function renderAll() {
+    runSweeps(); renderStatic(); renderSettings(); renderHome(); renderQuick(); renderForecast(); renderWallets(); renderDebts(); renderSavings(); renderCrypto(); renderApiSettings(); renderGoals(); renderHistory(); renderNav();
+    afterRenderTasks();
+  }
+  function go(p) {
+    page = p;
+    if (p !== "history") $("confirmBox").hidden = true;
+    renderAll(); window.scrollTo(0, 0);
+  }
+
+  /* ---------- избор на цветове ---------- */
+  var pickers = {};
+  function buildPicker(box, key, presets) {
+    var sw = el("div", "swatches");
+    presets.forEach(function (c) {
+      var b = el("button", "sw"); b.type = "button"; b.style.background = c; b.setAttribute("aria-label", c);
+      b.addEventListener("click", function () { S[key] = c; save(K_S, S); applyTheme(); refreshPickers(); });
+      sw.appendChild(b);
+    });
+    var custom = el("div", "col"); custom.style.marginTop = "6px";
+    var rows = {};
+    [["H", 360], ["S", 100], ["L", 100]].forEach(function (d) {
+      var row = el("div", "sl"); row.appendChild(el("span", null, d[0]));
+      var r = el("input"); r.type = "range"; r.min = 0; r.max = d[1]; r.step = 1;
+      r.setAttribute("aria-label", key + " " + d[0]);
+      r.addEventListener("input", function () {
+        S[key] = hsl2hex(+rows.H.value, +rows.S.value, +rows.L.value);
+        applyTheme(); markSwatches(key);
+      });
+      r.addEventListener("change", function () { save(K_S, S); });
+      rows[d[0]] = r; row.appendChild(r); custom.appendChild(row);
+    });
+    box.appendChild(sw); box.appendChild(custom);
+    pickers[key] = { sw: sw, presets: presets, rows: rows };
+  }
+  function markSwatches(key) {
+    var p = pickers[key]; if (!p) return;
+    var btns = p.sw.children;
+    for (var i = 0; i < btns.length; i++) btns[i].setAttribute("aria-pressed", p.presets[i].toLowerCase() === String(S[key]).toLowerCase() ? "true" : "false");
+  }
+  function refreshPickers() {
+    ["bg", "accent"].forEach(function (key) {
+      var p = pickers[key]; if (!p) return;
+      var hsl = hex2hsl(S[key]);
+      p.rows.H.value = hsl[0]; p.rows.S.value = hsl[1]; p.rows.L.value = hsl[2];
+      markSwatches(key);
+    });
+  }
+
+  /* ---------- снимка ---------- */
+  function readPhoto(file, cb) {
+    var fr = new FileReader();
+    fr.onerror = function () { cb(null); };
+    fr.onload = function () {
+      var img = new Image();
+      img.onerror = function () { cb(null); };
+      img.onload = function () {
+        var max = 1280, sc = Math.min(1, max / Math.max(img.width, img.height));
+        var c = document.createElement("canvas");
+        c.width = Math.max(1, Math.round(img.width * sc)); c.height = Math.max(1, Math.round(img.height * sc));
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        try { cb(c.toDataURL("image/jpeg", 0.8)); } catch (e) { cb(null); }
+      };
+      img.src = fr.result;
+    };
+    fr.readAsDataURL(file);
+  }
+
+  /* ---------- действия: начало ---------- */
+  function showMsg(id, txt) { var m = $(id); m.textContent = txt || ""; m.hidden = !txt; }
+  function addMove(type) {
+    var inp = $("amount"), amount = parseAmount(inp.value);
+    if (amount === null) { inp.classList.add("bad"); showMsg("homeMsg", t("errAmt")); inp.focus(); return; }
+    inp.classList.remove("bad"); showMsg("homeMsg", "");
+    var ctx = validCtx();
+    addEntry({ type: type, amount: amount, cur: wcur(ctx), w: ctx, note: $("note").value.trim() });
+    inp.value = ""; $("note").value = "";
+    renderAll(); showBalance();
+  }
+  function showBalance() {
+    try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (e) {}
+    window.scrollTo(0, 0);
+    var c = $("balance").parentNode; c.style.transform = "translateZ(0)";
+    setTimeout(function () { c.style.transform = ""; }, 60);
+  }
+
+  /* ---------- действия: прехвърляне и екскурзии ---------- */
+  function doTransfer() {
+    if ((isVault($("xFrom").value) || isVault($("xTo").value)) && !canSeeVault()) { askUnlock(doTransfer); return; }
+    var src = $("xFrom").value, dst = $("xTo").value, amount = parseAmount($("xAmt").value);
+    $("xAmt").classList.remove("bad");
+    if (amount === null) { $("xAmt").classList.add("bad"); showMsg("xMsg", t("errAmt")); return; }
+    if (src === dst) { showMsg("xMsg", t("errSame")); return; }
+    var c = xferCur(src, dst);
+    if (round2(bal(src, c)) < amount) { showMsg("xMsg", t("errFunds")); return; }
+    addEntry({ type: "xfer", src: src, dst: dst, amount: amount, cur: c });
+    showMsg("xMsg", ""); $("xAmt").value = "";
+    renderAll();
+  }
+  function parseOpt(v) {
+    v = String(v).trim();
+    if (!v) return 0;
+    var n = parseAmount(v);
+    return n === null ? null : n;
+  }
+  function renderTripForm() {
+    var cur = $("tCur").value || S.cur;
+    $("tHintMain").textContent = t("available") + money(Math.max(bal("main", cur), 0), cur);
+    var seeV = canSeeVault(), vs = $("tVaultSel"), vv = visVaults();
+    if (vs.options.length !== vv.length) {
+      var keepV = vs.value; vs.textContent = "";
+      vv.forEach(function (v) { var o = document.createElement("option"); o.value = v.id; vs.appendChild(o); });
+      if (keepV) vs.value = keepV;
+    }
+    for (var oi = 0; oi < vs.options.length; oi++) vs.options[oi].textContent = wname(vs.options[oi].value);
+    vs.hidden = vv.length < 2;
+    var vid = vs.value || "vault";
+    $("tHintVault").textContent = seeV ? t("available") + money(Math.max(bal(vid, cur), 0), cur) : "••••";
+    $("tVault").disabled = !seeV;
+    if (!seeV) $("tVault").value = "";
+    $("tUnlock").hidden = seeV;
+    var fm = parseOpt($("tMain").value), fv = parseOpt($("tVault").value);
+    var sum = (fm || 0) + (fv || 0);
+    var sl = $("tSumLine");
+    sl.hidden = !(sum > 0);
+    if (sum > 0) sl.textContent = t("tripTotal") + money(round2(sum), cur);
+  }
+  function resetTripForm() {
+    $("tName").value = ""; $("tMain").value = ""; $("tVault").value = ""; $("tCur").value = S.cur;
+    ["tName", "tMain", "tVault"].forEach(function (id) { $(id).classList.remove("bad"); });
+    showMsg("tMsg", "");
+  }
+  function createTrip() {
+    var name = $("tName").value.trim(), cur = $("tCur").value;
+    var fm = parseOpt($("tMain").value), fv = parseOpt($("tVault").value);
+    ["tName", "tMain", "tVault"].forEach(function (id) { $(id).classList.remove("bad"); });
+    if (!name) { $("tName").classList.add("bad"); showMsg("tMsg", t("errTripName")); $("tName").focus(); return; }
+    if (fm === null) { $("tMain").classList.add("bad"); showMsg("tMsg", t("errAmt")); $("tMain").focus(); return; }
+    if (fv === null) { $("tVault").classList.add("bad"); showMsg("tMsg", t("errAmt")); $("tVault").focus(); return; }
+    if (fm + fv <= 0) { $("tMain").classList.add("bad"); showMsg("tMsg", t("errTripSome")); $("tMain").focus(); return; }
+    if (fv > 0 && !canSeeVault()) { askUnlock(createTrip); return; }
+    if (round2(bal("main", cur)) < fm) { $("tMain").classList.add("bad"); showMsg("tMsg", t("errTripMain")); return; }
+    var vid = $("tVaultSel").value || "vault";
+    if (round2(bal(vid, cur)) < fv) { $("tVault").classList.add("bad"); showMsg("tMsg", t("errTripVault")); return; }
+    var tr = { id: uid(), name: name, cur: cur, created: Date.now(), ended: null };
+    trips.push(tr); save(K_T, trips);
+    if (fm > 0) addEntry({ type: "xfer", src: "main", dst: tr.id, amount: fm, cur: cur });
+    if (fv > 0) addEntry({ type: "xfer", src: vid, dst: tr.id, amount: fv, cur: cur });
+    showTripForm = false; resetTripForm();
+    S.ctx = tr.id; save(K_S, S);
+    go("home");
+  }
+  function onTripClick(ev) {
+    var b = ev.target.closest("[data-tact]");
+    if (!b) return;
+    var id = b.getAttribute("data-id"), act = b.getAttribute("data-tact"), tr = tripById(id);
+    if (!tr) return;
+    if (act === "open") { S.ctx = id; save(K_S, S); go("home"); return; }
+    if (act === "end") endTripId = id;
+    else if (act === "endno") endTripId = null;
+    else if (act === "endyes") {
+      var rest = round2(bal(id, tr.cur));
+      if (rest > 0) addEntry({ type: "xfer", src: id, dst: "main", amount: rest, cur: tr.cur });
+      else if (rest < 0) addEntry({ type: "xfer", src: "main", dst: id, amount: -rest, cur: tr.cur });
+      tr.ended = Date.now(); save(K_T, trips);
+      if (S.ctx === id) { S.ctx = "main"; save(K_S, S); }
+      endTripId = null;
+    }
+    renderAll();
+  }
+
+  /* ---------- действия: цели ---------- */
+  function addUnits(unit, n) {
+    var d = new Date(); d.setHours(0, 0, 0, 0);
+    if (unit === "days") d.setDate(d.getDate() + n);
+    else if (unit === "weeks") d.setDate(d.getDate() + 7 * n);
+    else {
+      var day = d.getDate(); d.setDate(1); d.setMonth(d.getMonth() + n);
+      var last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+      d.setDate(Math.min(day, last));
+    }
+    return d;
+  }
+  function resetGoalForm() {
+    $("gName").value = ""; $("gTarget").value = ""; $("gTime").value = ""; $("gUnit").value = "months";
+    ["gName", "gTarget", "gTime"].forEach(function (id) { $(id).classList.remove("bad"); });
+    showMsg("formMsg", "");
+  }
+  function createGoal() {
+    var name = $("gName").value.trim(), target = parseAmount($("gTarget").value);
+    var time = parseInt($("gTime").value, 10), unit = $("gUnit").value;
+    var bad = null, txt = "";
+    ["gName", "gTarget", "gTime"].forEach(function (id) { $(id).classList.remove("bad"); });
+    if (!name) { bad = "gName"; txt = t("errName"); }
+    else if (target === null) { bad = "gTarget"; txt = t("errTarget"); }
+    else if (!isFinite(time) || time < 1 || time > 3650) { bad = "gTime"; txt = t("errTime"); }
+    if (bad) { $(bad).classList.add("bad"); showMsg("formMsg", txt); $(bad).focus(); return; }
+    goals.push({ id: uid(), name: name, target: target, cur: S.cur, deadline: ymd(addUnits(unit, time)), created: Date.now() });
+    save(K_G, goals);
+    showForm = false; resetGoalForm(); renderAll();
+  }
+  function findGoal(id) { for (var i = 0; i < goals.length; i++) if (goals[i].id === id) return goals[i]; return null; }
+  function moveToGoal(g, amount) {
+    if (round2(bal("main", S.cur)) < amount) { goalMsg[g.id] = t("errBal"); return false; }
+    addEntry({ type: "to", amount: amount, cur: S.cur, goalId: g.id, goalName: g.name }); goalMsg[g.id] = ""; return true;
+  }
+  function onGoalClick(ev) {
+    var b = ev.target.closest("[data-act]");
+    if (!b) return;
+    var id = b.getAttribute("data-id"), act = b.getAttribute("data-act"), g = findGoal(id);
+    if (!g) return;
+    goalMsg[id] = "";
+    if (act === "today") {
+      moveToGoal(g, goalInfo(g).todayLeft);
+    } else if (act === "toggle") {
+      openGoal = openGoal === id ? null : id;
+    } else if (act === "put" || act === "take") {
+      var inp = $("oa-" + id), amount = parseAmount(inp ? inp.value : "");
+      if (amount === null) goalMsg[id] = t("errAmt");
+      else if (act === "put") { if (moveToGoal(g, amount)) openGoal = null; }
+      else if (amount > goalInfo(g).saved) goalMsg[id] = t("errGoal");
+      else { addEntry({ type: "from", amount: amount, cur: S.cur, goalId: g.id, goalName: g.name }); openGoal = null; }
+    } else if (act === "del") {
+      delGoalId = id;
+    } else if (act === "delno") {
+      delGoalId = null;
+    } else if (act === "delyes") {
+      var sv = goalInfo(g).saved;
+      if (sv > 0) addEntry({ type: "from", amount: sv, cur: S.cur, goalId: g.id, goalName: g.name });
+      goals = goals.filter(function (x) { return x.id !== id; }); save(K_G, goals);
+      delGoalId = null; if (openGoal === id) openGoal = null;
+    }
+    renderAll();
+  }
+
+  /* ---------- събития ---------- */
+  $("addBtn").addEventListener("click", function () { addMove("in"); });
+  $("spendBtn").addEventListener("click", function () { addMove("out"); });
+  $("amount").addEventListener("input", function () { this.classList.remove("bad"); showMsg("homeMsg", ""); });
+  $("amount").addEventListener("keydown", function (e) { if (e.key === "Enter") addMove("out"); });
+  $("viewAll").addEventListener("click", function () { go("history"); });
+  $("chips").addEventListener("click", function (ev) {
+    var b = ev.target.closest("[data-ctx]"); if (!b) return;
+    var c = b.getAttribute("data-ctx");
+    if (isVault(c) && !canSeeVault()) { askUnlock(function () { S.ctx = c; save(K_S, S); renderAll(); }); return; }
+    S.ctx = c; save(K_S, S); renderAll();
+  });
+  $("quick").addEventListener("click", function (ev) {
+    var b = ev.target.closest("button"); if (!b) return;
+    if (b.getAttribute("data-qadd")) { go("settings"); setTimeout(function () { $("qName").scrollIntoView({ block: "center" }); $("qName").focus(); }, 50); return; }
+    var id = b.getAttribute("data-q"); if (id) useQuick(id);
+  });
+  $("qAdd").addEventListener("click", addQuick);
+  $("qList").addEventListener("click", function (ev) {
+    var b = ev.target.closest("[data-qdel]"); if (!b) return;
+    var id = b.getAttribute("data-qdel"); quick = quick.filter(function (q) { return q.id !== id; }); save(K_Q, quick); renderAll();
+  });
+  $("toastUndo").addEventListener("click", function () { var f = toastUndoFn; hideToast(); if (f) f(); });
+  $("newDebtBtn").addEventListener("click", function () { showDebtForm = true; resetDebtForm(); renderDebts(); $("dWho").focus(); });
+  $("dCancel").addEventListener("click", function () { showDebtForm = false; resetDebtForm(); renderDebts(); });
+  $("dCreate").addEventListener("click", createDebt);
+  $("dLent").addEventListener("click", function () { debtDir = "lent"; renderDebts(); });
+  $("dBorrowed").addEventListener("click", function () { debtDir = "borrowed"; renderDebts(); });
+  $("debtCard").addEventListener("click", onDebtClick);
+  $("impBtn").addEventListener("click", function () { $("impFile").click(); });
+  $("impFile").addEventListener("change", function () { var f = this.files && this.files[0]; this.value = ""; if (f) readImportFile(f); });
+  $("impNo").addEventListener("click", cancelImport);
+  $("impYes").addEventListener("click", doImport);
+  $("impList").addEventListener("click", onImpListClick);
+  $("cryRefresh").addEventListener("click", function () { fetchCrypto(true); });
+  $("cryTot").addEventListener("change", function () { S.cryTot = this.checked; save(K_S, S); renderAll(); });
+  $("sEod").addEventListener("change", toggleEod);
+  $("sCapOn").addEventListener("change", saveCap);
+  $("sCapSave").addEventListener("click", saveCap);
+  $("sCapAmt").addEventListener("input", function () { this.classList.remove("bad"); showMsg("sMsg", ""); });
+  $("savMove").addEventListener("click", function () { go("wallets"); });
+  $("fcOn").addEventListener("change", function () { S.fc = this.checked; save(K_S, S); renderAll(); });
+  $("glass").addEventListener("input", function () { S.glass = +this.value; applyTheme(); });
+  $("glass").addEventListener("change", function () { save(K_S, S); });
+  $("vAdd").addEventListener("click", addVault);
+  $("vName").addEventListener("input", function () { this.classList.remove("bad"); showMsg("vMsg", ""); });
+  $("vList").addEventListener("click", function (ev) { var b = ev.target.closest("[data-vdel]"); if (b) delVault(b.getAttribute("data-vdel")); });
+  $("tVaultSel").addEventListener("change", renderTripForm);
+  $("dWho").addEventListener("input", renderDebtHint);
+  $("aSave").addEventListener("click", function () {
+    var n = parseAmount($("aAmt").value);
+    if (n === null) { showMsg("aMsg", t("errAmt")); return; }
+    S.allow = n; S.allowCur = S.cur; save(K_S, S); showMsg("aMsg", t("allowSaved")); renderAll();
+  });
+  $("aOff").addEventListener("click", function () { S.allow = 0; save(K_S, S); $("aAmt").value = ""; showMsg("aMsg", ""); renderAll(); });
+  $("aAmt").addEventListener("input", function () { showMsg("aMsg", ""); });
+  $("lockNow").addEventListener("click", lockVault);
+  $("revealBtn").addEventListener("click", function () { askUnlock(); });
+  $("mOk").addEventListener("click", submitModal);
+  $("mCancel").addEventListener("click", closeModal);
+  $("tUnlock").addEventListener("click", function () { askUnlock(renderTripForm); });
+  ["tMain", "tVault"].forEach(function (id) { $(id).addEventListener("input", function () { this.classList.remove("bad"); showMsg("tMsg", ""); renderTripForm(); }); });
+  $("tCur").addEventListener("change", renderTripForm);
+  document.addEventListener("visibilitychange", function () { if (document.hidden) lockVault(); else { if (runSweeps()) renderAll(); refreshApis(false); } });
+  setInterval(function () { if (!document.hidden && runSweeps()) renderAll(); }, 60000);
+  document.addEventListener("pointerdown", touchIdle, true);
+  document.addEventListener("keydown", touchIdle, true);
+
+  $("xBtn").addEventListener("click", doTransfer);
+  $("xFrom").addEventListener("change", renderXferLabel);
+  $("xTo").addEventListener("change", renderXferLabel);
+  $("xAmt").addEventListener("input", function () { this.classList.remove("bad"); showMsg("xMsg", ""); });
+  $("newTripBtn").addEventListener("click", function () { showTripForm = true; $("tCur").value = S.cur; renderWallets(); $("tName").focus(); });
+  $("tCancel").addEventListener("click", function () { showTripForm = false; resetTripForm(); renderWallets(); });
+  $("tCreate").addEventListener("click", createTrip);
+  $("tripList").addEventListener("click", onTripClick);
+
+  $("newGoalBtn").addEventListener("click", function () { showForm = true; renderGoals(); $("gName").focus(); });
+  $("gCancel").addEventListener("click", function () { showForm = false; resetGoalForm(); renderGoals(); });
+  $("gCreate").addEventListener("click", createGoal);
+  $("goalList").addEventListener("click", onGoalClick);
+
+  $("histList").addEventListener("click", function (ev) {
+    var b = ev.target.closest("[data-del]");
+    if (!b) return;
+    var id = b.getAttribute("data-del");
+    entries = entries.filter(function (e) { return e.id !== id; });
+    save(K_E, entries); renderAll();
+  });
+  $("clearBtn").addEventListener("click", function () { $("clearBtn").hidden = true; $("confirmBox").hidden = false; });
+  $("noBtn").addEventListener("click", function () { $("confirmBox").hidden = true; renderHistory(); });
+  $("yesBtn").addEventListener("click", function () {
+    entries = []; save(K_E, entries);
+    trips = trips.filter(function (x) { return !x.ended; }); save(K_T, trips);
+    $("confirmBox").hidden = true; renderAll();
+  });
+
+  $("langBg").addEventListener("click", function () { S.lang = "bg"; save(K_S, S); renderAll(); });
+  $("langEn").addEventListener("click", function () { S.lang = "en"; save(K_S, S); renderAll(); });
+  $("curSel").addEventListener("change", function () { S.cur = this.value; save(K_S, S); renderAll(); });
+  $("rateBtn").addEventListener("click", function () { fetchRates(true); });
+
+  $("photoBtn").addEventListener("click", function () { $("photoFile").click(); });
+  $("photoFile").addEventListener("change", function () {
+    var f = this.files && this.files[0]; this.value = "";
+    if (!f) return;
+    readPhoto(f, function (url) {
+      var ok = false;
+      if (url) { try { localStorage.setItem(K_P, url); ok = true; } catch (e) {} }
+      if (!ok) { showMsg("photoMsg", t("photoErr")); return; }
+      showMsg("photoMsg", ""); S.photo = true; save(K_S, S); applyPhoto();
+    });
+  });
+  $("photoRm").addEventListener("click", function () {
+    try { localStorage.removeItem(K_P); } catch (e) {}
+    S.photo = false; save(K_S, S); applyPhoto();
+  });
+  $("dim").addEventListener("input", function () { S.dim = +this.value; applyTheme(); });
+  $("dim").addEventListener("change", function () { save(K_S, S); });
+
+  $("gearBtn").addEventListener("click", function () { go(page === "settings" ? "home" : "settings"); });
+  var navBtns = document.querySelectorAll(".nav button");
+  for (var i = 0; i < navBtns.length; i++) {
+    navBtns[i].addEventListener("click", function () { go(this.getAttribute("data-go")); });
+  }
+
+  /* ---------- старт ---------- */
+  var st = load(K_S, {});
+  if (st.lang === "en" || st.lang === "bg") S.lang = st.lang;
+  if (st.cur && CURS[st.cur]) S.cur = st.cur;
+  if (typeof st.ctx === "string") S.ctx = st.ctx;
+  if (validHex(st.bg)) S.bg = st.bg;
+  if (validHex(st.accent)) S.accent = st.accent;
+  if (typeof st.dim === "number" && st.dim >= 0 && st.dim <= 90) S.dim = st.dim;
+  S.photo = !!st.photo;
+  if (st.fc === false) S.fc = false;
+  S.cryTot = !!st.cryTot;
+  if (typeof st.glass === "number" && st.glass >= 0 && st.glass <= 85) S.glass = st.glass;
+  S.eod = !!st.eod; S.eodDay = typeof st.eodDay === "string" ? st.eodDay : "";
+  if (typeof st.cap === "number" && st.cap > 0) { S.cap = st.cap; S.capCur = CURS[st.capCur] ? st.capCur : S.cur; S.capOn = !!st.capOn; }
+  if (typeof st.allow === "number" && st.allow > 0) { S.allow = st.allow; S.allowCur = CURS[st.allowCur] ? st.allowCur : S.cur; }
+
+  quick = load(K_Q, []); debts = load(K_D, []);
+  if (!Array.isArray(quick)) quick = [];
+  if (!Array.isArray(debts)) debts = [];
+  var vl = load(K_VL, null);
+  if (Array.isArray(vl) && vl.length && vl.every(function (v) { return v && typeof v.id === "string"; })) {
+    vaultList = vl.map(function (v) { return { id: v.id, name: typeof v.name === "string" ? v.name : "", hidden: !!v.hidden }; });
+    if (!vaultById("vault")) vaultList.unshift({ id: "vault", name: "" });
+  }
+  crypto_ = load(K_C, []); batches = load(K_IB, []); CP = load(K_CP, null);
+  if (!Array.isArray(crypto_)) crypto_ = [];
+  if (!Array.isArray(batches)) batches = [];
+  if (CP && (typeof CP.ts !== "number" || !CP.eur)) CP = null;
+  apiCreds = load(K_API, {}); apiSnap = load(K_APIS, {});
+  if (!apiCreds || typeof apiCreds !== "object" || Array.isArray(apiCreds)) apiCreds = {};
+  if (!apiSnap || typeof apiSnap !== "object" || Array.isArray(apiSnap)) apiSnap = {};
+  V = load(K_V, null);
+  if (!V || typeof V.hash !== "string" || typeof V.salt !== "string") V = null;
+  entries = load(K_E, []); goals = load(K_G, []); trips = load(K_T, []); R = load(K_R, null);
+  if (!Array.isArray(entries)) entries = [];
+  if (!Array.isArray(goals)) goals = [];
+  if (!Array.isArray(trips)) trips = [];
+  /* Записи от стари версии нямат валута: приемаме текущата. */
+  var changed = false;
+  entries.forEach(function (e) { if (!e.cur) { e.cur = S.cur; changed = true; } });
+  if (changed) save(K_E, entries);
+  changed = false;
+  goals.forEach(function (g) { if (!g.cur) { g.cur = S.cur; changed = true; } });
+  if (changed) save(K_G, goals);
+
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+  buildPicker($("bgPick"), "bg", BG_PRESETS);
+  buildPicker($("acPick"), "accent", AC_PRESETS);
+  applyPhoto();
+  renderAll();
+  fetchRates(false);
+
+  try { parent.postMessage("moite-pari-ok", "*"); } catch (e) {}
+})();
+</script>
+</body>
+</html>
